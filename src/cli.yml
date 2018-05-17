@@ -1,0 +1,27 @@
+name: loop 
+version: "0.1.0"
+author: Rich Jones <miserlou@gmail.com>
+about: UNIX's missing `loop` command 
+args:
+    - INPUT:
+        help: The command to be looped
+        required: true
+        index: 1
+    - num:
+        short: n
+        long: num
+        value_name: num
+        help: Number of iterations to execute
+        takes_value: true
+    - count_by:
+        short: b
+        long: count-by
+        value_name: count_by
+        help: Amount to increment the counter by
+        takes_value: true
+    - every:
+        short: e
+        long: every
+        value_name: every
+        help: How often to iterate
+        takes_value: true

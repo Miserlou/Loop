@@ -1,0 +1,12 @@
+[package]
+name = "looper"
+version = "0.1.0"
+authors = ["Rich Jones <miserlou@gmail.com>"]
+
+[dependencies]
+clap = {version = "2.31", features = ["yaml"]}
+subprocess = "0.1.12"
+humantime = "1.1.1"
+
+[[bin]]
+name = "loop"
