@@ -24,7 +24,7 @@ Counting by a value:
     14
     [ .. ]
 
-Timed loops:
+Timed loops, which accepts [humanized times](https://github.com/tailhook/humantime):
 
     $ loop 'date' --every 5s
     Thu May 17 10:51:03 EDT 2018
@@ -49,11 +49,21 @@ Looping until conditions are met:
 
 ## Installation
 
-Not published yet.
+### Linux
+
+_TODO_
+
+### OSX
+
+_TODO_
+
+### Rust Users
+
+    $ cargo install loop-rs
 
 ### Building
 
-    cargo build
+    $ cargo build
     ./debug/loop
 
 ## Advanced Usage
