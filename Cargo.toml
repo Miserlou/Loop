@@ -2,6 +2,14 @@
 name = "looper"
 version = "0.1.0"
 authors = ["Rich Jones <miserlou@gmail.com>"]
+description = "UNIX's missing loop command"
+
+documentation = "https://github.com/Miserlou/Looper"
+homepage = "https://github.com/Miserlou/Looper"
+repository = "https://github.com/Miserlou/Looper"
+
+readme = "README.md"
+license = "MIT"
 
 [dependencies]
 clap = {version = "2.31", features = ["yaml"]}
