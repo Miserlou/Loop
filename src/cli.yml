@@ -25,3 +25,9 @@ args:
         value_name: every
         help: How often to iterate
         takes_value: true
+    - until_contains:
+        short: c
+        long: until-contains
+        value_name: until_contains
+        help: Keep going until the output contains this string
+        takes_value: true

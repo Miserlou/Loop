@@ -39,6 +39,14 @@ Limited loops:
     ./hello.txt
     $ 
 
+Looping until conditions are met:
+
+    $ loop 'echo $RANDOM' --until-contains "666"
+    11235
+    35925
+    666
+    $ 
+
 ## Installation
 
 Not published yet.
@@ -67,3 +75,4 @@ Iterators can be floats!
     2 1
     4 2
     [ .. ]
+

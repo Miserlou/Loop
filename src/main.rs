@@ -34,6 +34,15 @@ fn main() {
     // Delay time
     let every = parse_duration(matches.value_of("every").unwrap_or("1us")).unwrap();
 
+    // --until-*
+    let mut has_matched = false;
+    let mut has_until_contains = false;
+    let mut until_contains = "";
+    if matches.is_present("until_contains"){
+    	has_until_contains = true;
+    	until_contains = matches.value_of("until_contains").unwrap();
+    }
+
     // Counters
     let mut count = 0.0;
     let mut adjusted_count = 0.0;
@@ -46,6 +55,7 @@ fn main() {
     // Executor/readers
     let mut executor;
     let mut buf_reader;
+    let mut line;
 
     while count < num {
 
@@ -57,8 +67,19 @@ fn main() {
         buf_reader = BufReader::new(executor);
 
         // Print the results
-        for (_i, line) in buf_reader.lines().enumerate() {
-            println!("{}", line.unwrap());
+        for (_i, rline) in buf_reader.lines().enumerate() {
+        	line = rline.unwrap();
+            println!("{}", line);
+            if has_until_contains{
+            	if line.contains(until_contains){
+            		has_matched=true;
+            	}
+            }
+        }
+
+        // Finish if we matched
+        if has_matched {
+        	return;
         }
 
         // Increment counters
