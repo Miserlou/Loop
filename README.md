@@ -1,4 +1,4 @@
-# loop
+# loop [![crates.io](https://img.shields.io/crates/v/loop-rs.svg)](https://crates.io/crates/loop-rs)
 
 UNIX's missing `loop` command. 
 
