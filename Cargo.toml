@@ -1,5 +1,5 @@
 [package]
-name = "looper"
+name = "loop-rs"
 version = "0.1.0"
 authors = ["Rich Jones <miserlou@gmail.com>"]
 description = "UNIX's missing loop command"
