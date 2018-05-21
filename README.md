@@ -100,3 +100,13 @@ The counter can be offset:
     14
     [ .. ]
 
+`--for` can accept all sorts of lists:
+
+    $ loop 'echo $ITEM' --for "`ls`"
+    Cargo.lock
+    Cargo.toml
+    README.md
+    src
+    target
+    $
+

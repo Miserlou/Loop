@@ -32,7 +32,14 @@ fn main() {
     let mut items: Vec<&str> = Vec::new();
     match matches.value_of("for") {
         Some(x) => {
-            items = x.split(",").collect();
+            if x.contains("\n"){
+                items = x.split("\n").collect();
+            } else if x.contains(","){
+                items = x.split(",").collect();
+            }
+            else{
+                items = x.split(",").collect();
+            }
             num = items.len() as f64;
         },
         None => {}
