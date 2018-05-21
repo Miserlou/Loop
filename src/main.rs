@@ -28,7 +28,17 @@ fn main() {
         num = f64::INFINITY;
     }
 
-    // Number of iterations
+    // Get items in `--for`
+    let mut items: Vec<&str> = Vec::new();
+    match matches.value_of("for") {
+        Some(x) => {
+            items = x.split(",").collect();
+            num = items.len() as f64;
+        },
+        None => {}
+    }
+
+    // Amount to increment counter by
     let mut count_by = matches.value_of("count_by").unwrap_or("1").parse::<f64>().unwrap();
 
     // Counter offset
@@ -42,8 +52,8 @@ fn main() {
     let mut has_until_contains = false;
     let mut until_contains = "";
     if matches.is_present("until_contains"){
-    	has_until_contains = true;
-    	until_contains = matches.value_of("until_contains").unwrap();
+        has_until_contains = true;
+        until_contains = matches.value_of("until_contains").unwrap();
     }
 
     // Counters
@@ -69,24 +79,30 @@ fn main() {
         env::set_var("COUNT", adjusted_count.to_string());
         env::set_var("ACTUALCOUNT", (count as i64).to_string());
 
+        // Get iterated item
+        match items.get(count as usize){
+            Some(item) => { env::set_var("ITEM", item); },
+            None => {}
+        }
+
         // Main executor
         executor = Exec::shell(&input_s).stream_stdout().unwrap();
         buf_reader = BufReader::new(executor);
 
         // Print the results
         for (_i, rline) in buf_reader.lines().enumerate() {
-        	line = rline.unwrap();
+            line = rline.unwrap();
             println!("{}", line);
             if has_until_contains{
-            	if line.contains(until_contains){
-            		has_matched=true;
-            	}
+                if line.contains(until_contains){
+                    has_matched=true;
+                }
             }
         }
 
         // Finish if we matched
         if has_matched {
-        	return;
+            return;
         }
 
         // Increment counters

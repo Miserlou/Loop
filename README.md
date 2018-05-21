@@ -15,16 +15,7 @@ Some examples:
     ./hello.txt
     [ .. ]
 
-Counting by a value:
-
-    $ loop 'echo $COUNT' --count-by 5
-    0
-    4
-    9
-    14
-    [ .. ]
-
-Timed loops, which accepts [humanized times](https://github.com/tailhook/humantime):
+Timed loops, which accept [humanized times](https://github.com/tailhook/humantime):
 
     $ loop 'date' --every 5s
     Thu May 17 10:51:03 EDT 2018
@@ -46,6 +37,23 @@ Looping until conditions are met:
     35925
     666
     $ 
+
+Looping over a list of items:
+
+    $ loop 'echo $ITEM' --for red,green,blue
+    red
+    green
+    blue
+    $ 
+
+Counting by a value:
+
+    $ loop 'echo $COUNT' --count-by 5
+    0
+    4
+    9
+    14
+    [ .. ]
 
 ## Installation
 

@@ -23,13 +23,19 @@ args:
         short: o
         long: offset
         value_name: offset
-        help: Amount to offset the initial counter
+        help: Amount to offset the initial counter by
         takes_value: true
     - every:
         short: e
         long: every
         value_name: every
-        help: How often to iterate
+        help: How often to iterate. ex., 5s, 1h1m1s1ms1us
+        takes_value: true
+    - for:
+        short: f
+        long: for
+        value_name: for
+        help: A comma-separated list of values, placed into $ITEM. ex., red,green,blue
         takes_value: true
     - until_contains:
         short: c
