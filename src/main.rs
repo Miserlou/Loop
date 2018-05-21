@@ -38,7 +38,7 @@ fn main() {
                 items = x.split(",").collect();
             }
             else{
-                items = x.split(",").collect();
+                items = x.split(" ").collect();
             }
             num = items.len() as f64;
         },
