@@ -78,11 +78,17 @@ Iterators can be floats!
 
 There's also an `$ACTUALCOUNT`:
 
-Iterators can be floats!
-
     $ loop 'echo $COUNT $ACTUALCOUNT' --count-by 2
     0 0
     2 1
     4 2
+    [ .. ]
+
+The counter can be offset:
+
+    $ loop 'echo $COUNT' --count-by 2 --offset 10
+    10
+    12
+    14
     [ .. ]
 

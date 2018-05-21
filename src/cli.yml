@@ -19,6 +19,12 @@ args:
         value_name: count_by
         help: Amount to increment the counter by
         takes_value: true
+    - offset:
+        short: o
+        long: offset
+        value_name: offset
+        help: Amount to offset the initial counter
+        takes_value: true
     - every:
         short: e
         long: every

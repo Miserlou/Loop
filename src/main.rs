@@ -31,6 +31,9 @@ fn main() {
     // Number of iterations
     let mut count_by = matches.value_of("count_by").unwrap_or("1").parse::<f64>().unwrap();
 
+    // Counter offset
+    let mut offset = matches.value_of("offset").unwrap_or("0").parse::<f64>().unwrap();
+
     // Delay time
     let every = parse_duration(matches.value_of("every").unwrap_or("1us")).unwrap();
 
@@ -45,7 +48,7 @@ fn main() {
 
     // Counters
     let mut count = 0.0;
-    let mut adjusted_count = 0.0;
+    let mut adjusted_count = 0.0 + offset;
 
     // Time
     let mut start = Instant::now();
@@ -61,6 +64,10 @@ fn main() {
 
         // Time Start
         start = Instant::now();
+
+        // Set counters before execution
+        env::set_var("COUNT", adjusted_count.to_string());
+        env::set_var("ACTUALCOUNT", (count as i64).to_string());
 
         // Main executor
         executor = Exec::shell(&input_s).stream_stdout().unwrap();
@@ -85,9 +92,6 @@ fn main() {
         // Increment counters
         count = count + 1.0;
         adjusted_count = adjusted_count + count_by;
-
-        env::set_var("COUNT", adjusted_count.to_string());
-        env::set_var("ACTUALCOUNT", (count as i64).to_string());
 
         // Delay until next iteration time
         loop {
