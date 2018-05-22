@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate clap;
 extern crate humantime;
+extern crate regex;
 extern crate subprocess;
 
 use std::env;
@@ -10,6 +11,7 @@ use std::time::{Instant};
 
 use clap::App;
 use humantime::parse_duration;
+use regex::Regex;
 use subprocess::{Exec, ExitStatus};
 
 fn main() {
@@ -46,10 +48,10 @@ fn main() {
     }
 
     // Amount to increment counter by
-    let mut count_by = matches.value_of("count_by").unwrap_or("1").parse::<f64>().unwrap();
+    let count_by = matches.value_of("count_by").unwrap_or("1").parse::<f64>().unwrap();
 
     // Counter offset
-    let mut offset = matches.value_of("offset").unwrap_or("0").parse::<f64>().unwrap();
+    let offset = matches.value_of("offset").unwrap_or("0").parse::<f64>().unwrap();
 
     // Delay time
     let every = parse_duration(matches.value_of("every").unwrap_or("1us")).unwrap();
@@ -61,6 +63,16 @@ fn main() {
     if matches.is_present("until_contains"){
         has_until_contains = true;
         until_contains = matches.value_of("until_contains").unwrap();
+    }
+
+    let mut has_until_match = false;
+    let until_match_re;
+    match matches.value_of("until_match") {
+        Some(match_str) => {
+            until_match_re = Regex::new(match_str).unwrap();
+            has_until_match = true;
+        },
+        None => { until_match_re = Regex::new("").unwrap() }
     }
 
     // Counters
@@ -93,6 +105,7 @@ fn main() {
         }
 
         // Main executor
+        // executor = Exec::shell(&input_s).stream_stdout().unwrap();
         executor = Exec::shell(&input_s).stream_stdout().unwrap();
         buf_reader = BufReader::new(executor);
 
@@ -100,12 +113,20 @@ fn main() {
         for (_i, rline) in buf_reader.lines().enumerate() {
             line = rline.unwrap();
             println!("{}", line);
-            if has_until_contains{
+
+            if has_until_contains {
                 if line.contains(until_contains){
                     has_matched=true;
                 }
             }
-        }
+
+            if has_until_match {
+            	match until_match_re.captures(&line){
+            		Some(item) => { return; }
+            		None => {}
+	            }
+	        }
+	    }
 
         // Finish if we matched
         if has_matched {

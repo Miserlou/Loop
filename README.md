@@ -38,6 +38,12 @@ Looping until conditions are met:
     666
     $ 
 
+Including regular expressions:
+
+    $ loop 'date' --until-match "(\d{4})"
+    Thu May 17 10:51:03 EDT 2018
+    $ 
+
 Looping over a list of items:
 
     $ loop 'echo $ITEM' --for red,green,blue

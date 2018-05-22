@@ -43,3 +43,9 @@ args:
         value_name: until_contains
         help: Keep going until the output contains this string
         takes_value: true
+    - until_match:
+        short: m
+        long: until-match
+        value_name: until_match
+        help: Keep going until the output matches this regular expression
+        takes_value: true
