@@ -114,15 +114,18 @@ fn main() {
             line = rline.unwrap();
             println!("{}", line);
 
+            // --until-contains
+            // We defer loop breaking until the entire result is printed.
             if has_until_contains {
                 if line.contains(until_contains){
                     has_matched=true;
                 }
             }
 
+			// --until-match
             if has_until_match {
             	match until_match_re.captures(&line){
-            		Some(item) => { return; }
+            		Some(item) => { has_matched=true; }
             		None => {}
 	            }
 	        }
