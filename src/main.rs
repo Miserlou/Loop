@@ -7,10 +7,10 @@ extern crate subprocess;
 use std::env;
 use std::f64;
 use std::io::{BufReader, BufRead};
-use std::time::{Instant};
+use std::time::{Instant, SystemTime};
 
 use clap::App;
-use humantime::parse_duration;
+use humantime::{parse_duration, parse_rfc3339_weak};
 use regex::Regex;
 use subprocess::{Exec, ExitStatus};
 
@@ -23,6 +23,12 @@ fn main() {
     // Main input command
     let input = matches.value_of("INPUT").unwrap();
     let input_s: String = input.to_string();
+
+    // Time
+    let program_start = Instant::now();
+    let mut loop_start = Instant::now();
+    let mut now = Instant::now();
+    let mut since;
 
     // Number of iterations
     let mut num = matches.value_of("num").unwrap_or("-1").parse::<f64>().unwrap();
@@ -56,7 +62,7 @@ fn main() {
     // Delay time
     let every = parse_duration(matches.value_of("every").unwrap_or("1us")).unwrap();
 
-    // --until-*
+    // --until-contains
     let mut has_matched = false;
     let mut has_until_contains = false;
     let mut until_contains = "";
@@ -65,6 +71,7 @@ fn main() {
         until_contains = matches.value_of("until_contains").unwrap();
     }
 
+    // --until-match
     let mut has_until_match = false;
     let until_match_re;
     match matches.value_of("until_match") {
@@ -75,14 +82,38 @@ fn main() {
         None => { until_match_re = Regex::new("").unwrap() }
     }
 
+    // --until-time
+    let mut has_until_time = false;
+    let mut until_time = parse_rfc3339_weak("9999-01-01 01:01:01").unwrap();
+    match matches.value_of("until_time") {
+        Some(match_str) => {
+            match parse_rfc3339_weak(match_str) {
+                Ok(time) => { until_time = time; },
+                // TODO here: Try to append current year and try again.
+                Err(err) => { println!("Bad --until-time: {:?}", err); return; }
+            }
+            has_until_time = true;
+        },
+        None => {}
+    }
+
+    // --for-duration
+    let has_for_duration;
+    let mut for_duration = parse_duration("999999y").unwrap();
+    match matches.value_of("for_duration") {
+        Some(match_str) => {
+            match parse_duration(match_str) {
+                        Ok(duration) => { for_duration = duration;  },
+                        Err(err) => { println!("Bad --for-duration: {:?}", err); return; }
+            }
+            has_for_duration = true;
+        },
+        None => { has_for_duration = false; }
+    }
+
     // Counters
     let mut count = 0.0;
     let mut adjusted_count = 0.0 + offset;
-
-    // Time
-    let mut start = Instant::now();
-    let mut now = Instant::now();
-    let mut since;
 
     // Executor/readers
     let mut executor;
@@ -92,7 +123,7 @@ fn main() {
     while count < num {
 
         // Time Start
-        start = Instant::now();
+        loop_start = Instant::now();
 
         // Set counters before execution
         env::set_var("COUNT", adjusted_count.to_string());
@@ -122,31 +153,53 @@ fn main() {
                 }
             }
 
-			// --until-match
+            // --until-match
             if has_until_match {
-            	match until_match_re.captures(&line){
-            		Some(item) => { has_matched=true; }
-            		None => {}
-	            }
-	        }
-	    }
+                match until_match_re.captures(&line){
+                    Some(_item) => { has_matched=true; }
+                    None => {}
+                }
+            }
+        }
 
         // Finish if we matched
         if has_matched {
-            return;
+            break;
         }
 
         // Increment counters
         count = count + 1.0;
         adjusted_count = adjusted_count + count_by;
 
-        // Delay until next iteration time
+        // The main delay-until-next-iteration loop
         loop {
+
+            // Finish if we're over our duration
+              if has_for_duration{
+                now = Instant::now();
+                since = now.duration_since(program_start);
+                match for_duration.checked_sub(since) {
+                    None => return,
+                    Some(_time) => { },
+                }
+              }
+
+              // Finish if our time until has passed
+              // In this location, the loop will execute at least once,
+              // even if the start time is beyond the until time.
+              if has_until_time{
+                match SystemTime::now().duration_since(until_time) {
+                    Ok(_t) => return,
+                    Err(_e) => {  },
+                }
+              }
+
+              // Delay until next iteration time
             now = Instant::now();
-            since = now.duration_since(start);
+            since = now.duration_since(loop_start);
             match every.checked_sub(since) {
                 None => break,
-                Some(time) => continue,
+                Some(_time) => continue,
             }
         }
     }

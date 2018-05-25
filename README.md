@@ -44,6 +44,23 @@ Including regular expressions:
     Thu May 17 10:51:03 EDT 2018
     $ 
 
+Looping for a certain duration:
+
+    $ loop 'date' --for-duration 8s --every 2s
+    Fri May 25 16:46:42 EDT 2018
+    Fri May 25 16:46:44 EDT 2018
+    Fri May 25 16:46:46 EDT 2018
+    Fri May 25 16:46:48 EDT 2018
+    $
+
+Or until a certain date/time:
+
+    $ loop 'date -u' --until-time '2018-05-25 20:50:00' --every 5s
+    Fri May 25 20:49:49 UTC 2018
+    Fri May 25 20:49:54 UTC 2018
+    Fri May 25 20:49:59 UTC 2018
+    $
+
 Looping over a list of items:
 
     $ loop 'echo $ITEM' --for red,green,blue

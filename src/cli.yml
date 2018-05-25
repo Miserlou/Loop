@@ -37,6 +37,12 @@ args:
         value_name: for
         help: A comma-separated list of values, placed into $ITEM. ex., red,green,blue
         takes_value: true
+    - for_duration:
+        short: d
+        long: for-duration
+        value_name: for_duration
+        help: A duration of time to loop for. ex., 1h30m, 1h1m1s1ms1us
+        takes_value: true
     - until_contains:
         short: c
         long: until-contains
@@ -48,4 +54,10 @@ args:
         long: until-match
         value_name: until_match
         help: Keep going until the output matches this regular expression
+        takes_value: true
+    - until_time:
+        short: t
+        long: until-time
+        value_name: until_time
+        help: Keep going until a future time, ex. "2018-04-20 04:20:00" (Times in UTC.)
         takes_value: true
