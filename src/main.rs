@@ -136,8 +136,7 @@ fn main() {
         }
 
         // Main executor
-        // executor = Exec::shell(&input_s).stream_stdout().unwrap();
-        executor = Exec::shell(&input_s).stream_stdout().unwrap();
+        executor = Exec::cmd("/bin/bash").args(&["-c"]).arg(&input_s).stream_stdout().unwrap();
         buf_reader = BufReader::new(executor);
 
         // Print the results
