@@ -1,3 +1,5 @@
+![Logo, with help from Linn Kristiansen](https://i.imgur.com/TQp8nu3.png)
+
 # loop [![Build Status](https://travis-ci.org/Miserlou/Loop.svg)](https://travis-ci.org/Miserlou/Loop) [![crates.io](https://img.shields.io/crates/v/loop-rs.svg)](https://crates.io/crates/loop-rs)
 
 UNIX's missing `loop` command. 
