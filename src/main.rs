@@ -6,6 +6,7 @@ extern crate subprocess;
 
 use std::env;
 use std::f64;
+use std::process::Command;
 use std::io::{BufReader, BufRead};
 use std::time::{Instant, SystemTime};
 
@@ -136,6 +137,23 @@ fn main() {
         }
 
         // Main executor
+		// let output = Command::new("/bin/bash")
+		//         .arg("-c")
+		//         .arg(&input_s)
+		//         .output().unwrap_or_else(|e| {
+		//             panic!("Failed to execute process: {}", e)
+		//     });
+
+	 //    if output.status.success() {
+	 //        let s = String::from_utf8_lossy(&output.stdout);
+
+	 //        print!("rustc succeeded and stdout was:\n{}", s);
+	 //    } else {
+	 //        let s = String::from_utf8_lossy(&output.stderr);
+
+	 //        print!("rustc failed and stderr was:\n{}", s);
+	 //    }
+
         executor = Exec::cmd("/bin/bash").args(&["-c"]).arg(&input_s).stream_stdout().unwrap();
         buf_reader = BufReader::new(executor);
 
