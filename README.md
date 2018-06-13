@@ -88,7 +88,10 @@ _TODO_
 
 ### OSX
 
-_TODO_
+If you're a Homebrew user:
+
+    $ brew tap miserlou/loop https://github.com/Miserlou/Loop.git
+    $ brew install loop --HEAD
 
 ### Rust Users
 
