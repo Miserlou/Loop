@@ -40,6 +40,22 @@ Looping until conditions are met:
     666
     $ 
 
+Looping until a program succeeds:
+
+    $ loop "if (( RANDOM % 2 )); then (echo "TRUE"; true); else (echo "FALSE"; false); fi" --until-success
+    FALSE
+    FALSE
+    TRUE
+    $
+
+..or until it fails:
+
+    $ loop "if (( RANDOM % 2 )); then (echo "TRUE"; true); else (echo "FALSE"; false); fi" --until-error
+    TRUE
+    TRUE
+    FALSE
+    $
+
 Including regular expressions:
 
     $ loop 'date' --until-match "(\d{4})"
