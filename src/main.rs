@@ -7,13 +7,12 @@ extern crate subprocess;
 use std::env;
 use std::f64;
 use std::process::Command;
-use std::io::{BufReader, BufRead};
 use std::time::{Instant, SystemTime};
 
 use clap::App;
 use humantime::{parse_duration, parse_rfc3339_weak};
 use regex::Regex;
-use subprocess::{Exec, ExitStatus};
+use subprocess::{Exec, ExitStatus, Redirection};
 
 fn main() {
 
@@ -112,14 +111,29 @@ fn main() {
         None => { has_for_duration = false; }
     }
 
+    // --until-error
+    let mut has_until_error = false;
+    let mut has_until_error_code = false;
+    let mut until_error_code = 1;
+    if matches.occurrences_of("until_error") > 0 {
+        has_until_error = true;
+        if matches.values_of("until_error").unwrap().next() != Some("any_error") {
+            has_until_error_code = true;
+            until_error_code = matches.value_of("until_error").unwrap_or("1").parse::<u32>().unwrap();
+        }
+    }
+
+    // --until-success
+    let mut has_until_success = false;
+    if matches.occurrences_of("until_success") > 0 {
+        has_until_success = true;
+    }
+
     // Counters
     let mut count = 0.0;
     let mut adjusted_count = 0.0 + offset;
 
-    // Executor/readers
-    let mut executor;
-    let mut buf_reader;
-    let mut line;
+    let mut result;
 
     while count < num {
 
@@ -154,12 +168,10 @@ fn main() {
 	 //        print!("rustc failed and stderr was:\n{}", s);
 	 //    }
 
-        executor = Exec::cmd("/bin/bash").args(&["-c"]).arg(&input_s).stream_stdout().unwrap();
-        buf_reader = BufReader::new(executor);
+        result = Exec::shell(&input_s).stdout(Redirection::Pipe).stderr(Redirection::Merge).capture().unwrap();
 
         // Print the results
-        for (_i, rline) in buf_reader.lines().enumerate() {
-            line = rline.unwrap();
+        for line in result.stdout_str().lines() {
             println!("{}", line);
 
             // --until-contains
@@ -177,6 +189,25 @@ fn main() {
                     None => {}
                 }
             }
+
+            // --until-error
+            if has_until_error {
+                if has_until_error_code {
+                    // TODO: might want to print the error code when it doesn't match
+                    if result.exit_status == ExitStatus::Exited(until_error_code) {
+                        has_matched = true;
+                    }
+                } else if !result.exit_status.success() {
+                    has_matched = true;
+                }
+            }
+
+            // --until-success
+            if has_until_success {
+                if result.exit_status.success() {
+                    has_matched = true;
+                }
+            }
         }
 
         // Finish if we matched
@@ -192,26 +223,26 @@ fn main() {
         loop {
 
             // Finish if we're over our duration
-              if has_for_duration{
+            if has_for_duration {
                 now = Instant::now();
                 since = now.duration_since(program_start);
                 match for_duration.checked_sub(since) {
                     None => return,
                     Some(_time) => { },
                 }
-              }
+            }
 
-              // Finish if our time until has passed
-              // In this location, the loop will execute at least once,
-              // even if the start time is beyond the until time.
-              if has_until_time{
+            // Finish if our time until has passed
+            // In this location, the loop will execute at least once,
+            // even if the start time is beyond the until time.
+            if has_until_time{
                 match SystemTime::now().duration_since(until_time) {
                     Ok(_t) => return,
                     Err(_e) => {  },
                 }
-              }
+            }
 
-              // Delay until next iteration time
+            // Delay until next iteration time
             now = Instant::now();
             since = now.duration_since(loop_start);
             match every.checked_sub(since) {

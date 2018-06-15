@@ -61,3 +61,13 @@ args:
         value_name: until_time
         help: Keep going until a future time, ex. "2018-04-20 04:20:00" (Times in UTC.)
         takes_value: true
+    - until_error:
+        short: r
+        long: until-error
+        value_name: until_error
+        help: Keep going until the command exit status is non-zero, or the value given
+        default_value: "any_error"
+    - until_success:
+        short: s
+        long: until-success
+        help: Keep going until the command exit status is 0
