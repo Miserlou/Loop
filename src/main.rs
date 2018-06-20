@@ -151,23 +151,6 @@ fn main() {
         }
 
         // Main executor
-		// let output = Command::new("/bin/bash")
-		//         .arg("-c")
-		//         .arg(&input_s)
-		//         .output().unwrap_or_else(|e| {
-		//             panic!("Failed to execute process: {}", e)
-		//     });
-
-	 //    if output.status.success() {
-	 //        let s = String::from_utf8_lossy(&output.stdout);
-
-	 //        print!("rustc succeeded and stdout was:\n{}", s);
-	 //    } else {
-	 //        let s = String::from_utf8_lossy(&output.stderr);
-
-	 //        print!("rustc failed and stderr was:\n{}", s);
-	 //    }
-
         result = Exec::shell(&input_s).stdout(Redirection::Pipe).stderr(Redirection::Merge).capture().unwrap();
 
         // Print the results
