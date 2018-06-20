@@ -31,23 +31,23 @@ fn main() {
     let mut now = Instant::now();
     let mut since;
 
-    // Number of iterations
+	// Number of iterations
     let mut num = matches.value_of("num").unwrap_or("-1").parse::<f64>().unwrap();
     if num < 0.0{
         num = f64::INFINITY;
     }
 
     // Get items in `--for`
-    let mut items: Vec<&str> = Vec::new();
+    let mut items: Vec<String> = Vec::new();
     match matches.value_of("for") {
         Some(x) => {
             if x.contains("\n"){
-                items = x.split("\n").collect();
+                items = x.split("\n").map(String::from).collect();
             } else if x.contains(","){
-                items = x.split(",").collect();
+                items = x.split(",").map(String::from).collect();
             }
             else{
-                items = x.split(" ").collect();
+                items = x.split(" ").map(String::from).collect();
             }
             num = items.len() as f64;
         },
@@ -136,9 +136,11 @@ fn main() {
     if matches.occurrences_of("stdin") > 0 {
         has_stdin = true;
 	    let stdin = io::stdin();
-	    for line in stdin.lock().lines() {
-	        full_stdin.push_str(&line.unwrap());
+	    for linee in stdin.lock().lines() {
+	        items.push(linee.unwrap().to_owned());
 	    }
+
+	    num = matches.value_of("num").unwrap_or(&items.len().to_string()).parse::<f64>().unwrap();
     }
 
     // Counters
@@ -154,9 +156,6 @@ fn main() {
         // Set counters before execution
         env::set_var("COUNT", adjusted_count.to_string());
         env::set_var("ACTUALCOUNT", (count as i64).to_string());
-        if(has_stdin){
-        	env::set_var("STDIN", full_stdin.to_string());
-        }
 
         // Get iterated item
         match items.get(count as usize){
