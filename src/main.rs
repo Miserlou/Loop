@@ -6,6 +6,7 @@ extern crate subprocess;
 
 use std::env;
 use std::f64;
+use std::io::{self, BufRead};
 use std::process::Command;
 use std::time::{Instant, SystemTime};
 
@@ -129,10 +130,20 @@ fn main() {
         has_until_success = true;
     }
 
+    // Stdin
+    let mut has_stdin = false;
+    let mut full_stdin = "".to_string();
+    if matches.occurrences_of("stdin") > 0 {
+        has_stdin = true;
+	    let stdin = io::stdin();
+	    for line in stdin.lock().lines() {
+	        full_stdin.push_str(&line.unwrap());
+	    }
+    }
+
     // Counters
     let mut count = 0.0;
     let mut adjusted_count = 0.0 + offset;
-
     let mut result;
 
     while count < num {
@@ -143,6 +154,9 @@ fn main() {
         // Set counters before execution
         env::set_var("COUNT", adjusted_count.to_string());
         env::set_var("ACTUALCOUNT", (count as i64).to_string());
+        if(has_stdin){
+        	env::set_var("STDIN", full_stdin.to_string());
+        }
 
         // Get iterated item
         match items.get(count as usize){

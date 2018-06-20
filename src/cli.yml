@@ -71,3 +71,7 @@ args:
         short: s
         long: until-success
         help: Keep going until the command exit status is 0
+    - stdin:
+        short: i
+        long: stdin
+        help: Read from standard input
