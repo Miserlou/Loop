@@ -1,6 +1,7 @@
 #[macro_use]
 extern crate clap;
 extern crate humantime;
+extern crate isatty;
 extern crate regex;
 extern crate subprocess;
 
@@ -12,6 +13,7 @@ use std::time::{Instant, SystemTime};
 
 use clap::App;
 use humantime::{parse_duration, parse_rfc3339_weak};
+use isatty::{stdin_isatty};
 use regex::Regex;
 use subprocess::{Exec, ExitStatus, Redirection};
 
@@ -133,7 +135,7 @@ fn main() {
     // Stdin
     let mut has_stdin = false;
     let mut full_stdin = "".to_string();
-    if matches.occurrences_of("stdin") > 0 {
+    if (matches.occurrences_of("stdin") > 0) || (!stdin_isatty()) {
         has_stdin = true;
 	    let stdin = io::stdin();
 	    for linee in stdin.lock().lines() {
