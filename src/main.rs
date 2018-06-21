@@ -33,7 +33,7 @@ fn main() {
     let mut now = Instant::now();
     let mut since;
 
-	// Number of iterations
+    // Number of iterations
     let mut num = matches.value_of("num").unwrap_or("-1").parse::<f64>().unwrap();
     if num < 0.0{
         num = f64::INFINITY;
@@ -137,12 +137,12 @@ fn main() {
     let mut full_stdin = "".to_string();
     if (matches.occurrences_of("stdin") > 0) || (!stdin_isatty()) {
         has_stdin = true;
-	    let stdin = io::stdin();
-	    for linee in stdin.lock().lines() {
-	        items.push(linee.unwrap().to_owned());
-	    }
+        let stdin = io::stdin();
+        for linee in stdin.lock().lines() {
+            items.push(linee.unwrap().to_owned());
+        }
 
-	    num = matches.value_of("num").unwrap_or(&items.len().to_string()).parse::<f64>().unwrap();
+        num = matches.value_of("num").unwrap_or(&items.len().to_string()).parse::<f64>().unwrap();
     }
 
     // Counters
