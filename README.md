@@ -31,7 +31,7 @@ Loops in bash are surprisingly complicated and fickle! I wanted a simple way to 
 
 ### Linux
 
-_TODO_
+_TODO! [See here](https://github.com/Miserlou/Loop/issues/4)._
 
 ### OSX
 
@@ -44,7 +44,7 @@ If you're a Homebrew user:
 
     $ cargo install loop-rs
 
-### Building
+#### Building
 
     $ cargo build
     ./debug/loop
