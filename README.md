@@ -8,7 +8,24 @@ UNIX's missing `loop` command.
 
 Loops in bash are surprisingly complicated and fickle! I wanted a simple way to write controllable loops.
 
-`loop` lets you write powerful, intuitive loops in a single line.
+`loop` lets you write powerful, intuitive looping one-liners in your favorite shell.
+
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+- [loop](#loop--)
+  - [Why?](#why)
+  - [Installation](#installation)
+    - [Linux](#linux)
+    - [OSX](#osx)
+    - [Rust Users](#rust-users)
+    - [Building](#building)
+  - [Usage](#usage)
+    - [Counters](#counters)
+    - [Timed Loops](#timed-loops)
+    - [Until Conditions](#until-conditions)
+    - [Iterating Over Lists and Standard Inputs](#iterating-lists-and-standard-inputs)
+  - [License](#license)
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 ## Installation
 
@@ -102,7 +119,7 @@ Or until a certain date/time with `--until-time`:
     Fri May 25 20:49:59 UTC 2018
     $
 
-### Until Conditions:
+### Until Conditions
 
 `loop` can interate until output contains a string with `--until-contains`:
 
@@ -134,7 +151,7 @@ Or until it matches a regular expression with `--until-error`:
     Thu May 17 10:51:03 EDT 2018
     $ 
 
-### Iterating Lists and Standard Inputs
+### Iterating Over Lists and Standard Inputs
 
 Loops can iterate over all sorts of lists with `--for`:
 
