@@ -9,18 +9,21 @@ _"UNIX's missing `loop` command!"_
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 - [loop](#loop--)
-  - [Why?](#why)
-  - [Installation](#installation)
-    - [Linux](#linux)
-    - [OSX](#osx)
-    - [Rust Users](#rust-users)
+
+- [Why?](#why)
+- [Installation](#installation)
+  - [Linux](#linux)
+  - [OSX](#osx)
+  - [Rust Users](#rust-users)
     - [Building](#building)
-  - [Usage](#usage)
-    - [Counters](#counters)
-    - [Timed Loops](#timed-loops)
-    - [Until Conditions](#until-conditions)
-    - [Iterating Over Lists and Standard Inputs](#iterating-lists-and-standard-inputs)
-  - [License](#license)
+    - [Publishing](#publishing)
+- [Usage](#usage)
+  - [Counters](#counters)
+  - [Timed Loops](#timed-loops)
+  - [Until Conditions](#until-conditions)
+  - [Iterating Over Lists and Standard Inputs](#iterating-over-lists-and-standard-inputs)
+- [License](#license)
+
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 ## Why?
@@ -45,6 +48,11 @@ If you're a Homebrew user:
     $ cargo install loop-rs
 
 #### Building
+
+    $ cargo build
+    ./debug/loop
+
+#### Publishing
 
     $ cargo build
     ./debug/loop
