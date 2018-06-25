@@ -6,95 +6,9 @@ UNIX's missing `loop` command.
 
 ## Why?
 
-Loops in bash are surprisingly complicated and fickle! I wanted a simple way to write controllable loops. This is also my first Rust project.
+Loops in bash are surprisingly complicated and fickle! I wanted a simple way to write controllable loops.
 
-Some examples:
-
-    $ loop ls 
-    ./hello.txt
-    ./hello.txt
-    ./hello.txt
-    ./hello.txt
-    [ .. ]
-
-Timed loops, which accept [humanized times](https://github.com/tailhook/humantime):
-
-    $ loop 'date' --every 5s
-    Thu May 17 10:51:03 EDT 2018
-    Thu May 17 10:51:08 EDT 2018
-    Thu May 17 10:51:13 EDT 2018
-    [ .. ]
-
-Limited loops:
-
-    $ loop 'ls' --num 2
-    ./hello.txt
-    ./hello.txt
-    $ 
-
-Looping until conditions are met:
-
-    $ loop 'echo $RANDOM' --until-contains "666"
-    11235
-    35925
-    666
-    $ 
-
-Looping until a program succeeds:
-
-    $ loop "if (( RANDOM % 2 )); then (echo "TRUE"; true); else (echo "FALSE"; false); fi" --until-success
-    FALSE
-    FALSE
-    TRUE
-    $
-
-..or until it fails:
-
-    $ loop "if (( RANDOM % 2 )); then (echo "TRUE"; true); else (echo "FALSE"; false); fi" --until-error
-    TRUE
-    TRUE
-    FALSE
-    $
-
-Including regular expressions:
-
-    $ loop 'date' --until-match "(\d{4})"
-    Thu May 17 10:51:03 EDT 2018
-    $ 
-
-Looping for a certain duration:
-
-    $ loop 'date' --for-duration 8s --every 2s
-    Fri May 25 16:46:42 EDT 2018
-    Fri May 25 16:46:44 EDT 2018
-    Fri May 25 16:46:46 EDT 2018
-    Fri May 25 16:46:48 EDT 2018
-    $
-
-Or until a certain date/time:
-
-    $ loop 'date -u' --until-time '2018-05-25 20:50:00' --every 5s
-    Fri May 25 20:49:49 UTC 2018
-    Fri May 25 20:49:54 UTC 2018
-    Fri May 25 20:49:59 UTC 2018
-    $
-
-Looping over a list of items:
-
-    $ loop 'echo $ITEM' --for red,green,blue
-    red
-    green
-    blue
-    $ 
-
-Counting by a value:
-
-    $ loop 'echo $COUNT' --count-by 5
-    0
-    4
-    9
-    14
-    [ .. ]
+`loop` lets you write powerful, intuitive loops in a single line.
 
 ## Installation
 
@@ -118,9 +32,35 @@ If you're a Homebrew user:
     $ cargo build
     ./debug/loop
 
-## Advanced Usage
+## Usage
 
-Iterators can be floats!
+### Counters
+
+`loop` places the a counter value into the `$COUNT` enviornment variable.
+
+    $ loop 'echo $COUNT'
+    0
+    1
+    2
+    [ .. ]
+
+The amount this counter increments can be changed with `--count-by`:
+
+    $ loop 'echo $COUNT' --count-by 2
+    2
+    4
+    6
+    [ .. ]
+
+The counter can be offset with `--offset`:
+
+    $ loop 'echo $COUNT' --count-by 2 --offset 10
+    10
+    12
+    14
+    [ .. ]
+
+And iterators can be floats!
 
     $ loop 'echo $COUNT' --count-by 1.1
     0
@@ -136,13 +76,88 @@ There's also an `$ACTUALCOUNT`:
     4 2
     [ .. ]
 
-The counter can be offset:
+### Timed Loops
 
-    $ loop 'echo $COUNT' --count-by 2 --offset 10
-    10
-    12
-    14
-    [ .. ]
+Loops can be set to timers which accept [humanized times](https://github.com/tailhook/humantime) from the microsecond to the year with `--every`:
+
+    $ loop 'date' --every 5s
+    Thu May 17 10:51:03 EDT 2018
+    Thu May 17 10:51:08 EDT 2018
+    Thu May 17 10:51:13 EDT 2018
+
+Looping can be limited to a set duration with `--for-duration`:
+
+    $ loop 'date' --for-duration 8s --every 2s
+    Fri May 25 16:46:42 EDT 2018
+    Fri May 25 16:46:44 EDT 2018
+    Fri May 25 16:46:46 EDT 2018
+    Fri May 25 16:46:48 EDT 2018
+    $
+
+Or until a certain date/time with `--until-time`:
+
+    $ loop 'date -u' --until-time '2018-05-25 20:50:00' --every 5s
+    Fri May 25 20:49:49 UTC 2018
+    Fri May 25 20:49:54 UTC 2018
+    Fri May 25 20:49:59 UTC 2018
+    $
+
+### Until Conditions:
+
+`loop` can interate until output contains a string with `--until-contains`:
+
+    $ loop 'echo $RANDOM' --until-contains "666"
+    11235
+    35925
+    666
+    $ 
+
+Or until a program succeeds with `--until-success`:
+
+    $ loop "if (( RANDOM % 2 )); then (echo "TRUE"; true); else (echo "FALSE"; false); fi" --until-success
+    FALSE
+    FALSE
+    TRUE
+    $
+
+Or until it fails with `--until-error` (which also accepts an optional error code):
+
+    $ loop "if (( RANDOM % 2 )); then (echo "TRUE"; true); else (echo "FALSE"; false); fi" --until-error
+    TRUE
+    TRUE
+    FALSE
+    $
+
+Or until it matches a regular expression with `--until-error`:
+
+    $ loop 'date' --until-match "(\d{4})"
+    Thu May 17 10:51:03 EDT 2018
+    $ 
+
+### Iterating Lists and Standard Inputs
+
+Loops can iterate over all sorts of lists with `--for`:
+
+    $ loop 'echo $ITEM' --for red,green,blue
+    red
+    green
+    blue
+    $ 
+
+And can read from the standard input via pipes:
+
+    $ cat my-list-of-files-to-create.txt | loop 'touch $ITEM'
+    $ ls
+    hello.jpg 
+    goodbye.jpg
+
+..or via the keyboard with `-i`:
+
+    $ loop 'echo $ITEM | tr a-z A-Z' -i
+    hello
+    world^D
+    HELLO
+    WORLD
 
 `--for` can accept all sorts of lists:
 
@@ -154,3 +169,5 @@ The counter can be offset:
     target
     $
 
+## License
+(c) Rich Jones, 2018. MIT License.
