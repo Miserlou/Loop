@@ -6,9 +6,20 @@ _"UNIX's missing `loop` command!"_
 
 `loop` lets you write powerful, intuitive looping one-liners in your favorite shell! Finally, loops in Bash that make sense!
 
+## Why?
+
+Loops in bash are surprisingly complicated and fickle! I wanted a simple and intuitive way to write controllable loops that:
+
+ * Run on **timers**!
+ * Have **custom counters**!
+ * Loop **until output matches**!
+ * Loop **until a program succeeds** (or fails!)
+ * Iterate over the **standard input**! 
+
+ And so `loop` was born!
+
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
-- [Why?](#why)
 - [Installation](#installation)
   - [Linux](#linux)
   - [OSX](#osx)
@@ -21,10 +32,6 @@ _"UNIX's missing `loop` command!"_
   - [Iterating Over Lists and Standard Inputs](#iterating-over-lists-and-standard-inputs)
 - [License](#license)
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
-
-## Why?
-
-Loops in bash are surprisingly complicated and fickle! I wanted a simple and intuitive way to write controllable loops that run on **timers**, have **custom counters**, loop **until output matches certain conditions**, and iterate over the **standard input**. And so `loop` was born!
 
 ## Installation
 
