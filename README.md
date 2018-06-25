@@ -62,6 +62,15 @@ If you're a Homebrew user:
 
 ## Usage
 
+With no arguments, `loop` will simply repeatedly execute a command string as fast as it can until `^C` (control + C) is sent.
+
+    $ loop 'echo hello'
+    hello
+    hello
+    hello
+    hello
+    [ .. ]
+
 ### Counters
 
 `loop` places the a counter value into the `$COUNT` enviornment variable.
