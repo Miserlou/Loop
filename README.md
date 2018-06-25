@@ -9,7 +9,6 @@ _"UNIX's missing `loop` command!"_
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 - [loop](#loop--)
-
 - [Why?](#why)
 - [Installation](#installation)
   - [Linux](#linux)
@@ -23,7 +22,6 @@ _"UNIX's missing `loop` command!"_
   - [Until Conditions](#until-conditions)
   - [Iterating Over Lists and Standard Inputs](#iterating-over-lists-and-standard-inputs)
 - [License](#license)
-
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 ## Why?
