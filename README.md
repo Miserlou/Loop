@@ -10,9 +10,10 @@ _"UNIX's missing `loop` command!"_
 
 Loops in bash are surprisingly complicated and fickle! I wanted a simple and intuitive way to write controllable loops that:
 
- * Run on **timers**!
+ * Run on controllable **timers**!
  * Have **custom counters**!
- * Loop **until output matches**!
+ * Loop **until output matches** a condition!
+ * Loop **until a certain time**!
  * Loop **until a program succeeds** (or fails!)
  * Iterate over the **standard input**! 
 
