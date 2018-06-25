@@ -2,13 +2,9 @@
 
 # loop [![Build Status](https://travis-ci.org/Miserlou/Loop.svg)](https://travis-ci.org/Miserlou/Loop) [![crates.io](https://img.shields.io/crates/v/loop-rs.svg)](https://crates.io/crates/loop-rs)
 
-UNIX's missing `loop` command. 
+_"UNIX's missing `loop` command."_
 
-## Why?
-
-Loops in bash are surprisingly complicated and fickle! I wanted a simple way to write controllable loops.
-
-`loop` lets you write powerful, intuitive looping one-liners in your favorite shell.
+`loop` lets you write powerful, intuitive looping one-liners in your favorite shell! Finally, loops in Bash that make sense!
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
@@ -26,6 +22,10 @@ Loops in bash are surprisingly complicated and fickle! I wanted a simple way to 
     - [Iterating Over Lists and Standard Inputs](#iterating-lists-and-standard-inputs)
   - [License](#license)
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
+
+## Why?
+
+Loops in bash are surprisingly complicated and fickle! I wanted a simple way to write controllable loops.
 
 ## Installation
 
