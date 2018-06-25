@@ -2,7 +2,7 @@
 
 # loop [![Build Status](https://travis-ci.org/Miserlou/Loop.svg)](https://travis-ci.org/Miserlou/Loop) [![crates.io](https://img.shields.io/crates/v/loop-rs.svg)](https://crates.io/crates/loop-rs)
 
-_"UNIX's missing `loop` command."_
+_"UNIX's missing `loop` command!"_
 
 `loop` lets you write powerful, intuitive looping one-liners in your favorite shell! Finally, loops in Bash that make sense!
 
@@ -25,7 +25,7 @@ _"UNIX's missing `loop` command."_
 
 ## Why?
 
-Loops in bash are surprisingly complicated and fickle! I wanted a simple way to write controllable loops.
+Loops in bash are surprisingly complicated and fickle! I wanted a simple and intuitive way to write controllable loops that run on **timers**, have **custom counters**, loop **until output matches certain conditions**, and iterate over the **standard input**. And so `loop` was born!
 
 ## Installation
 
