@@ -220,7 +220,7 @@ You can also easily pipe lists to `loop`:
 
 ## Useful Examples
 
-Here are some handy things you can do with loop!
+Here are some handy things you can do with `loop`!
 
 ### Testing inputs to a program
 
@@ -246,7 +246,7 @@ If you have a long-running process that creates a new file, you might want to ki
 
 ### Create a backup for all files in a directory
 
-I already showed you how to do this, but here it is again:
+If you've got a whole list of files that you want to create backup copies of, you can do it like so:
 
     $ ls
     hello.jpg
