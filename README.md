@@ -31,6 +31,12 @@ Loops in bash are surprisingly complicated and fickle! I wanted a simple and int
   - [Timed Loops](#timed-loops)
   - [Until Conditions](#until-conditions)
   - [Iterating Over Lists and Standard Inputs](#iterating-over-lists-and-standard-inputs)
+- [Useful Examples](#useful-examples)
+  - [Testing inputs to a program](#testing-inputs-to-a-program)
+  - [Waiting for a website to appear online](#waiting-for-a-website-to-appear-online)
+  - [Waiting for a file to be created](#waiting-for-a-file-to-be-created)
+  - [Create a backup for all files in a directory](#create-a-backup-for-all-files-in-a-directory)
+- [Contributing](#contributing)
 - [License](#license)
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -183,10 +189,16 @@ Loops can iterate over all sorts of lists with `--for`:
 
 And can read from the standard input via pipes:
 
-    $ cat my-list-of-files-to-create.txt | loop 'touch $ITEM'
+    $ cat /tmp/my-list-of-files-to-create.txt | loop 'touch $ITEM'
     $ ls
     hello.jpg 
     goodbye.jpg
+
+You can also easily pipe lists to `loop`:
+
+    $ ls | loop 'cp $ITEM $ITEM.bak'; ls
+    hello.jpg
+    hello.jpg.bak
 
 ..or via the keyboard with `-i`:
 
@@ -206,5 +218,55 @@ And can read from the standard input via pipes:
     target
     $
 
+## Useful Examples
+
+Here are some handy things you can do with loop!
+
+### Testing inputs to a program
+
+If you have a lot of files and a program, but don't know which file is the one the program takes, you can loop over them until you find it:
+
+    $ ls | loop './my_program $ITEM' --until-success;
+
+Or, if you have a list of files but need to find the one which causes your program to fail:
+
+    $ ls | loop './my_program $ITEM' --until-fail;
+
+### Waiting for a website to appear online
+
+If you've just kicked off a website deployment pipeline, you might want to run a process when the site starts returning 200 response codes. With `--every` and `--until-contains`, you can do this without flooding the site with requests:
+
+    $ ./deploy.sh; loop 'curl -sw "%{http_code}" http://coolwebsite.biz' --every 5s --until-contains 200; ./announce_to_slack.sh
+
+### Waiting for a file to be created
+
+If you have a long-running process that creates a new file, you might want to kick off another program when that process outputs a new file, like so:
+
+    $ ./create_big_file -o my_big_file.bin; loop 'ls' --until-contains 'my_big_file.bin'; ./upload_big_file my_big_file.bin
+
+### Create a backup for all files in a directory
+
+I already showed you how to do this, but here it is again:
+
+    $ ls
+    hello.jpg
+    $ ls | loop 'cp $ITEM $ITEM.bak'
+    $ ls
+    hello.jpg
+    hello.jpg.bak
+
+Got any more useful examples? Send a pull request!
+
+## Contributing
+
+This project is still young, so there is still plenty to be done. Contributions are more than welcome!
+
+Please file tickets for discussion before submitting patches. Pull requests should target `master` and should leave Loop in a "shippable" state if merged.
+
+If you are adding a non-trivial amount of new code, please include a functioning test in your PR. The test suite will be run by [Travis CI](https://travis-ci.org/Miserlou/Zappa) once you open a pull request. Please include the GitHub issue or pull request URL that has discussion related to your changes as a comment in the code ([example](https://github.com/Miserlou/Zappa/blob/fae2925431b820eaedf088a632022e4120a29f89/zappa/zappa.py#L241-L243)). This greatly helps for project maintainability, as it allows us to trace back use cases and explain decision making. Similarly, please make sure that you meet all of the requirements listed in the [pull request template](https://raw.githubusercontent.com/Miserlou/Zappa/master/.github/PULL_REQUEST_TEMPLATE.md).
+
+Please feel free to work on any open ticket, especially any ticket marked with the "help-wanted" label!
+
 ## License
+
 (c) Rich Jones, 2018. MIT License.
