@@ -1,0 +1,18 @@
+name: loop-rs # you probably want to 'snapcraft register <name>'
+version: '0.3.0+git' # just for humans, typically '1.2+git' or '1.3.2'
+summary: UNIX's missing `loop command` 
+description: |
+  loop lets you write powerful, intuitive looping one-liners!
+  https://github.com/Miserlou/Loop 
+grade: devel # must be 'stable' to release into candidate/stable channels
+confinement: strict # use 'strict' once you have the right plugs and slots
+
+apps:
+  loop-rs:
+    command: loop 
+
+parts:
+  loop-rs:
+    plugin: rust
+    rust-channel: stable
+    source: .

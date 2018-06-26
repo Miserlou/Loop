@@ -44,7 +44,11 @@ Loops in bash are surprisingly complicated and fickle! I wanted a simple and int
 
 ### Linux
 
-_TODO! [See here](https://github.com/Miserlou/Loop/issues/4)._
+`loop` is available on Snapcraft for all distributions as `loop-rs`.
+
+    $ snap install loop-rs --beta
+
+_Issues related to this package are tracked [here](https://github.com/Miserlou/Loop/issues/4)._
 
 ### OSX
 
