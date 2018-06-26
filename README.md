@@ -11,11 +11,18 @@ _"UNIX's missing `loop` command!"_
 Loops in bash are surprisingly complicated and fickle! I wanted a simple and intuitive way to write controllable loops that:
 
  * Run on controllable **timers**!
+   - `$ loop "ls" --every 10s`
  * Have **custom counters**!
+   - `$ loop "touch $ITEM.txt" --count-by 5`
  * Loop **until output matches** a condition!
+   - `$ loop "./get_response_code" --until-contains 200`
  * Loop **until a certain time**!
+   - `$ loop "./poke_server" --for-duration 8h`
  * Loop **until a program succeeds** (or fails!)
- * Iterate over the **standard input**! 
+    - `$ loop "./poke_server" --until-success`
+ * Iterate over the **standard input**!
+    - `$ cat files_to_create.txt | loop "touch $ITEM"`
+ * ..and **much more!**
 
  And so `loop` was born!
 
