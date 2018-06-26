@@ -165,7 +165,7 @@ Or until it fails with `--until-error` (which also accepts an optional error cod
     FALSE
     $
 
-Or until it matches a regular expression with `--until-error`:
+Or until it matches a regular expression with `--until-match`:
 
     $ loop 'date' --until-match "(\d{4})"
     Thu May 17 10:51:03 EDT 2018
