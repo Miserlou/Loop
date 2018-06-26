@@ -36,6 +36,8 @@ Loops in bash are surprisingly complicated and fickle! I wanted a simple and int
   - [Waiting for a website to appear online](#waiting-for-a-website-to-appear-online)
   - [Waiting for a file to be created](#waiting-for-a-file-to-be-created)
   - [Create a backup for all files in a directory](#create-a-backup-for-all-files-in-a-directory)
+  - [Keep trying a failing script until it passes, up to 5 times](#keep-trying-a-failing-script-until-it-passes-up-to-5-times)
+  - [More examples](#more-examples)
 - [Contributing](#contributing)
 - [License](#license)
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
