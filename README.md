@@ -259,6 +259,20 @@ If you've got a whole list of files that you want to create backup copies of, yo
     hello.jpg
     hello.jpg.bak
 
+### Keep trying a failing script until it passes, up to 5 times
+
+This is an [example from StackExchange].
+
+> I want to write logic in shell script which will retry it to run again after 15 sec upto 5 times based on "status code=FAIL" if it fails due to some issue. 
+
+There are so many questions like this, which end up with long threads of complicated answers. With `loop`, it's a simple one liner:
+
+    loop './do_thing.sh' --every 15s --until-success --num 5 
+
+Which will do the thing every 15 seconds until it succeeds, for a maximum of five times.
+
+### More examples
+
 Got any more useful examples? Send a pull request!
 
 ## Contributing
