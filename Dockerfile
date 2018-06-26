@@ -18,9 +18,14 @@ RUN apt-get update && \
 ENV LC_ALL C.UTF-8
 ENV SNAPCRAFT_SETUP_CORE 1
 
+# update Cargo.toml version
+# update snapcraft.yaml version
 # $ docker build -t snap .
-# $ docker run -it -v `pwd`:./ snap /bin/bash
+# $ docker run -it -v `pwd`:./derp snap /bin/bash
 # cd /tmp
+# apt-get install curl
 # curl https://sh.rustup.rs -sSf | sh
 # source $HOME/.cargo/env
 # snapcraft
+# snapcraft push *.snap
+# snapcraft release loop-rs 1 beta 
