@@ -98,7 +98,7 @@ With no arguments, `loop` will simply repeatedly execute a command string as fas
 
 ### Counters
 
-`loop` places the a counter value into the `$COUNT` enviornment variable.
+`loop` places the a counter value into the `$COUNT` environment variable.
 
     $ loop 'echo $COUNT'
     0
@@ -166,7 +166,7 @@ Or until a certain date/time with `--until-time`:
 
 ### Until Conditions
 
-`loop` can interate until output contains a string with `--until-contains`:
+`loop` can iterate until output contains a string with `--until-contains`:
 
     $ loop 'echo $RANDOM' --until-contains "666"
     11235
