@@ -98,7 +98,7 @@ With no arguments, `loop` will simply repeatedly execute a command string as fas
 
 ### Counters
 
-`loop` places the a counter value into the `$COUNT` environment variable.
+`loop` places a counter value into the `$COUNT` environment variable.
 
     $ loop 'echo $COUNT'
     0
