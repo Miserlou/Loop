@@ -11,22 +11,22 @@ _"UNIX's missing `loop` command!"_
 Loops in bash are surprisingly complicated and fickle! I wanted a simple and intuitive way to write controllable loops that:
 
  * Run on controllable **timers**!
-   - `$ loop "ls" --every 10s`
+   - `$ loop 'ls' --every 10s`
 
  * Have **custom counters**!
-   - `$ loop "touch $COUNT.txt" --count-by 5`
+   - `$ loop 'touch $COUNT.txt' --count-by 5`
 
  * Loop **until output matches** a condition!
-   - `$ loop "./get_response_code" --until-contains 200`
+   - `$ loop './get_response_code' --until-contains 200`
 
  * Loop **until a certain time**!
-   - `$ loop "./poke_server" --for-duration 8h`
+   - `$ loop './poke_server' --for-duration 8h`
 
  * Loop **until a program succeeds** (or fails!)
-    - `$ loop "./poke_server" --until-success`
+    - `$ loop './poke_server' --until-success`
 
  * Iterate over the **standard input**!
-    - `$ cat files_to_create.txt | loop "touch $ITEM"`
+    - `$ cat files_to_create.txt | loop 'touch $ITEM'`
 
  * ..and **much more!**
 
@@ -176,7 +176,7 @@ Or until a certain date/time with `--until-time`:
 
 Or until a program succeeds with `--until-success`:
 
-    $ loop "if (( RANDOM % 2 )); then (echo "TRUE"; true); else (echo "FALSE"; false); fi" --until-success
+    $ loop 'if (( RANDOM % 2 )); then (echo "TRUE"; true); else (echo "FALSE"; false); fi' --until-success
     FALSE
     FALSE
     TRUE
@@ -184,7 +184,7 @@ Or until a program succeeds with `--until-success`:
 
 Or until it fails with `--until-error` (which also accepts an optional error code):
 
-    $ loop "if (( RANDOM % 2 )); then (echo "TRUE"; true); else (echo "FALSE"; false); fi" --until-error
+    $ loop 'if (( RANDOM % 2 )); then (echo "TRUE"; true); else (echo "FALSE"; false); fi' --until-error
     TRUE
     TRUE
     FALSE
