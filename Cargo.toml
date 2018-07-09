@@ -4,9 +4,9 @@ version = "0.3.3"
 authors = ["Rich Jones <miserlou@gmail.com>"]
 description = "UNIX's missing loop command"
 
-documentation = "https://github.com/Miserlou/Looper"
-homepage = "https://github.com/Miserlou/Looper"
-repository = "https://github.com/Miserlou/Looper"
+documentation = "https://github.com/Miserlou/Loop"
+homepage = "https://github.com/Miserlou/Loop"
+repository = "https://github.com/Miserlou/Loop"
 
 readme = "README.md"
 license = "MIT"
