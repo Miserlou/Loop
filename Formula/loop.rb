@@ -2,7 +2,7 @@ class Loop < Formula
   desc "UNIX's missing `loop` command"
   homepage "https://github.com/Miserlou/Loop"
   url "https://github.com/Miserlou/Loop/archive/master.zip"
-  sha256 "ae3faebac27fe4fd1f14de8f348e3df410f0b8fd02deea54ef4abcd1f7e08648"
+  sha256 "56f351200bfddf72136aaf5051cd97ab04e0c42810ef312dbbd809125c4798ec"
   head "https://github.com/Miserlou/Loop.git"
   version "0.3.3"
 
