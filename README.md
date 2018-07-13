@@ -51,6 +51,7 @@ Loops in bash are surprisingly complicated and fickle! I wanted a simple and int
   - [Create a backup for all files in a directory](#create-a-backup-for-all-files-in-a-directory)
   - [Keep trying a failing script until it passes, up to 5 times](#keep-trying-a-failing-script-until-it-passes-up-to-5-times)
   - [More examples](#more-examples)
+- [Shell completions](#shell-completions)
 - [Contributing](#contributing)
 - [License](#license)
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
@@ -172,7 +173,7 @@ Or until a certain date/time with `--until-time`:
     11235
     35925
     666
-    $ 
+    $
 
 Or until a program succeeds with `--until-success`:
 
@@ -194,7 +195,7 @@ Or until it matches a regular expression with `--until-match`:
 
     $ loop 'date' --until-match "(\d{4})"
     Thu May 17 10:51:03 EDT 2018
-    $ 
+    $
 
 ### Iterating Over Lists and Standard Inputs
 
@@ -204,13 +205,13 @@ Loops can iterate over all sorts of lists with `--for`:
     red
     green
     blue
-    $ 
+    $
 
 And can read from the standard input via pipes:
 
     $ cat /tmp/my-list-of-files-to-create.txt | loop 'touch $ITEM'
     $ ls
-    hello.jpg 
+    hello.jpg
     goodbye.jpg
 
 You can also easily pipe lists to `loop`:
@@ -278,19 +279,28 @@ If you've got a whole list of files that you want to create backup copies of, yo
 
 _This is an [example from StackExchange](https://unix.stackexchange.com/questions/82598/how-do-i-write-a-retry-logic-in-script-to-keep-retrying-to-run-it-upto-5-times/)._
 
-> I want to write logic in shell script which will retry it to run again after 15 sec upto 5 times based on "status code=FAIL" if it fails due to some issue. 
+> I want to write logic in shell script which will retry it to run again after 15 sec upto 5 times based on "status code=FAIL" if it fails due to some issue.
 
-There are so many questions like this on StackExchange, which all end up with long threads of complicated answers. 
+There are so many questions like this on StackExchange, which all end up with long threads of complicated answers.
 
 With `loop`, it's a simple one liner:
 
-    loop './do_thing.sh' --every 15s --until-success --num 5 
+    loop './do_thing.sh' --every 15s --until-success --num 5
 
 Which will do the thing every 15 seconds until it succeeds, for a maximum of five times.
 
 ### More examples
 
 Got any more useful examples? Send a pull request!
+
+## Shell completions
+
+To generate shell completions just use the `completions` subcommand and pass the
+shell to generate the completion for. For example to generate completions for zsh run:
+
+    loop completions zsh
+
+The completion goes to the standard output and you can redirect it to some file.
 
 ## Contributing
 
