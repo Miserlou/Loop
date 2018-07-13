@@ -15,9 +15,24 @@ use humantime::{parse_duration, parse_rfc3339_weak};
 use isatty::{stdin_isatty};
 use regex::Regex;
 use subprocess::{Exec, ExitStatus, Redirection};
-use structopt::StructOpt;
+use structopt::{clap::{Shell, AppSettings}, StructOpt};
 
 fn main() {
+
+    // Testing subcommands
+    let matches = Opt::clap().get_matches();
+    match matches.subcommand() {
+        ("completions", Some(sub_matches)) => {
+            let shell = sub_matches.value_of("shell").unwrap();
+            Opt::clap().gen_completions_to(
+                "loop",
+                shell.parse::<Shell>().unwrap(),
+                &mut io::stdout()
+            );
+            std::process::exit(0);
+        },
+        _ => (),
+    }
 
     // Load the CLI arguments
     let opt = Opt::from_args();
@@ -140,7 +155,9 @@ fn main() {
 
 #[derive(StructOpt, Debug)]
 #[structopt(name = "loop", author = "Rich Jones <miserlou@gmail.com>",
-            about = "UNIX's missing `loop` command")]
+            about = "UNIX's missing `loop` command",
+            raw(global_settings = "&[AppSettings::SubcommandsNegateReqs]")
+)]
 struct Opt {
     /// The command to be looped
     #[structopt()]
@@ -194,6 +211,19 @@ struct Opt {
     /// Read from standard input
     #[structopt(short = "i", long = "stdin")]
     stdin: bool,
+
+    #[structopt(subcommand)]
+    subcommands : Option<Subcommands>,
+}
+
+#[derive(StructOpt, Debug)]
+enum Subcommands {
+    #[structopt(name = "completions",
+                about = "Generates completion scripts for your shell")]
+    Completions {
+        /// The shell to generate the script for
+        shell : Shell,
+    }
 }
 
 #[derive(Debug)]
