@@ -222,6 +222,8 @@ enum Subcommands {
                 about = "Generates completion scripts for your shell")]
     Completions {
         /// The shell to generate the script for
+        #[structopt(raw(possible_values = "&Shell::variants()",
+                        case_insensitive = "true"))]
         shell : Shell,
     }
 }
