@@ -153,6 +153,15 @@ You can get a summary of successes and failures (based on exit codes) with `--su
     Successes:   5
     Failures:    0
 
+or
+
+    $ loop 'ls -foobarbatz' --num 3
+    ...
+    Total runs:  3
+    Successes:   0
+    Failures:    3 (-1, -1, 1)
+
+
 ### Timed Loops
 
 Loops can be set to timers which accept [humanized times](https://github.com/tailhook/humantime) from the microsecond to the year with `--every`:
