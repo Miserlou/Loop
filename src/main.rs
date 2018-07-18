@@ -48,6 +48,8 @@ fn main() {
 
     let mut has_matched = false;
 
+    let mut summary = Summary { successes: 0, failures: Vec::new() };
+
     let counter = Counter { start: opt.offset, end: num, step_by: opt.count_by};
     for (count, actual_count) in counter.enumerate() {
 
@@ -108,6 +110,14 @@ fn main() {
             }
         }
 
+        if opt.summary {
+            match result.exit_status {
+                ExitStatus::Exited(0)  =>  summary.successes += 1,
+                ExitStatus::Exited(n) => summary.failures.push(n),
+                _ => summary.failures.push(99),
+            }
+        }
+
         // Finish if we matched
         if has_matched {
             break;
@@ -117,7 +127,7 @@ fn main() {
         if let Some(duration) = opt.for_duration {
             let since = Instant::now().duration_since(program_start);
             if since >= duration {
-                return;
+                break;
             }
         }
 
@@ -126,7 +136,7 @@ fn main() {
         // even if the start time is beyond the until time.
         if let Some(until_time) = opt.until_time {
             if SystemTime::now().duration_since(until_time).is_ok() {
-                return;
+                break;
             }
         }
 
@@ -135,6 +145,10 @@ fn main() {
         if let Some(time) = opt.every.checked_sub(since) {
             thread::sleep(time);
         }
+    }
+
+    if opt.summary {
+        summary.print()
     }
 }
 
@@ -194,6 +208,10 @@ struct Opt {
     /// Read from standard input
     #[structopt(short = "i", long = "stdin")]
     stdin: bool,
+
+    /// Provide a summary
+    #[structopt(long = "summary")]
+    summary: bool
 }
 
 #[derive(Debug)]
@@ -224,6 +242,23 @@ struct Counter {
     start: f64,
     end: f64,
     step_by: f64,
+}
+
+#[derive(Debug)]
+struct Summary {
+    successes: u32,
+    failures: Vec<u32>
+}
+
+impl Summary {
+    fn print(self) {
+        let total = self.successes + self.failures.len() as u32;
+        let errors = self.failures.into_iter().map(|f| (-(f as i32)).to_string()).collect::<Vec<String>>().join(", ");
+
+        println!("Total runs:\t{}", total);
+        println!("Successes:\t{}", self.successes);
+        println!("Failures:\t{}", errors);
+    }
 }
 
 impl Iterator for Counter {
