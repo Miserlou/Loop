@@ -17,6 +17,8 @@ use regex::Regex;
 use subprocess::{Exec, ExitStatus, Redirection};
 use structopt::StructOpt;
 
+static UNKONWN_EXIT_CODE: u32 = 99;
+
 fn main() {
 
     // Load the CLI arguments
@@ -114,7 +116,7 @@ fn main() {
             match result.exit_status {
                 ExitStatus::Exited(0)  =>  summary.successes += 1,
                 ExitStatus::Exited(n) => summary.failures.push(n),
-                _ => summary.failures.push(99),
+                _ => summary.failures.push(UNKONWN_EXIT_CODE),
             }
         }
 
