@@ -257,10 +257,10 @@ impl Summary {
         let errors = if self.failures.is_empty() {
             String::from("0")
         } else {
-            self.failures.into_iter()
-                .map(|f| (-(f as i32)).to_string())
-                .collect::<Vec<String>>()
-                .join(", ")
+            format!("{} ({})", self.failures.len(), self.failures.into_iter()
+                    .map(|f| (-(f as i32)).to_string())
+                    .collect::<Vec<String>>()
+                    .join(", "))
         };
 
         println!("Total runs:\t{}", total);
