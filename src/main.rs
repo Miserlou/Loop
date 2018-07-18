@@ -253,7 +253,15 @@ struct Summary {
 impl Summary {
     fn print(self) {
         let total = self.successes + self.failures.len() as u32;
-        let errors = self.failures.into_iter().map(|f| (-(f as i32)).to_string()).collect::<Vec<String>>().join(", ");
+
+        let errors = if self.failures.is_empty() {
+            String::from("0")
+        } else {
+            self.failures.into_iter()
+                .map(|f| (-(f as i32)).to_string())
+                .collect::<Vec<String>>()
+                .join(", ")
+        };
 
         println!("Total runs:\t{}", total);
         println!("Successes:\t{}", self.successes);
