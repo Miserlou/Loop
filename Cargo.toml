@@ -20,3 +20,4 @@ subprocess = "0.1.12"
 
 [[bin]]
 name = "loop"
+path = "src/main.rs"
