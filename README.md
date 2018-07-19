@@ -257,6 +257,10 @@ If you've just kicked off a website deployment pipeline, you might want to run a
 
     $ ./deploy.sh; loop 'curl -sw "%{http_code}" http://coolwebsite.biz' --every 5s --until-contains 200; ./announce_to_slack.sh
 
+Or until a host is online:
+
+    $ loop "ping -c 1 mysite.com" --until-success; ./do_next_thing
+
 ### Waiting for a file to be created
 
 If you have a long-running process that creates a new file, you might want to kick off another program when that process outputs a new file, like so:
