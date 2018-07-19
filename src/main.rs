@@ -1,5 +1,5 @@
 #[macro_use]
-extern crate clap;
+extern crate structopt;
 extern crate humantime;
 extern crate isatty;
 extern crate regex;
@@ -8,165 +8,70 @@ extern crate subprocess;
 use std::env;
 use std::f64;
 use std::io::{self, BufRead};
-use std::process::Command;
-use std::time::{Instant, SystemTime};
+use std::thread;
+use std::time::{Duration, Instant, SystemTime};
 
-use clap::App;
 use humantime::{parse_duration, parse_rfc3339_weak};
 use isatty::{stdin_isatty};
 use regex::Regex;
 use subprocess::{Exec, ExitStatus, Redirection};
+use structopt::StructOpt;
+
+static UNKONWN_EXIT_CODE: u32 = 99;
 
 fn main() {
 
-    // Load the CLI
-    let yaml = load_yaml!("cli.yml");
-    let matches = App::from_yaml(yaml).get_matches();
-
-    // Main input command
-    let input = matches.value_of("INPUT").unwrap();
-    let input_s: String = input.to_string();
+    // Load the CLI arguments
+    let opt = Opt::from_args();
 
     // Time
     let program_start = Instant::now();
-    let mut loop_start = Instant::now();
-    let mut now = Instant::now();
-    let mut since;
 
     // Number of iterations
-    let mut num = matches.value_of("num").unwrap_or("-1").parse::<f64>().unwrap();
-    if num < 0.0{
-        num = f64::INFINITY;
-    }
+    let mut items = if let Some(items) = opt.ffor { items.clone() } else { vec![] };
 
-    // Get items in `--for`
-    let mut items: Vec<String> = Vec::new();
-    match matches.value_of("for") {
-        Some(x) => {
-            if x.contains("\n"){
-                items = x.split("\n").map(String::from).collect();
-            } else if x.contains(","){
-                items = x.split(",").map(String::from).collect();
-            }
-            else{
-                items = x.split(" ").map(String::from).collect();
-            }
-            num = items.len() as f64;
-        },
-        None => {}
-    }
-
-    // Amount to increment counter by
-    let count_by = matches.value_of("count_by").unwrap_or("1").parse::<f64>().unwrap();
-
-    // Counter offset
-    let offset = matches.value_of("offset").unwrap_or("0").parse::<f64>().unwrap();
-
-    // Delay time
-    let every = parse_duration(matches.value_of("every").unwrap_or("1us")).unwrap();
-
-    // --until-contains
-    let mut has_matched = false;
-    let mut has_until_contains = false;
-    let mut until_contains = "";
-    if matches.is_present("until_contains"){
-        has_until_contains = true;
-        until_contains = matches.value_of("until_contains").unwrap();
-    }
-
-    // --until-match
-    let mut has_until_match = false;
-    let until_match_re;
-    match matches.value_of("until_match") {
-        Some(match_str) => {
-            until_match_re = Regex::new(match_str).unwrap();
-            has_until_match = true;
-        },
-        None => { until_match_re = Regex::new("").unwrap() }
-    }
-
-    // --until-time
-    let mut has_until_time = false;
-    let mut until_time = parse_rfc3339_weak("9999-01-01 01:01:01").unwrap();
-    match matches.value_of("until_time") {
-        Some(match_str) => {
-            match parse_rfc3339_weak(match_str) {
-                Ok(time) => { until_time = time; },
-                // TODO here: Try to append current year and try again.
-                Err(err) => { println!("Bad --until-time: {:?}", err); return; }
-            }
-            has_until_time = true;
-        },
-        None => {}
-    }
-
-    // --for-duration
-    let has_for_duration;
-    let mut for_duration = parse_duration("999999y").unwrap();
-    match matches.value_of("for_duration") {
-        Some(match_str) => {
-            match parse_duration(match_str) {
-                        Ok(duration) => { for_duration = duration;  },
-                        Err(err) => { println!("Bad --for-duration: {:?}", err); return; }
-            }
-            has_for_duration = true;
-        },
-        None => { has_for_duration = false; }
-    }
-
-    // --until-error
-    let mut has_until_error = false;
-    let mut has_until_error_code = false;
-    let mut until_error_code = 1;
-    if matches.occurrences_of("until_error") > 0 {
-        has_until_error = true;
-        if matches.values_of("until_error").unwrap().next() != Some("any_error") {
-            has_until_error_code = true;
-            until_error_code = matches.value_of("until_error").unwrap_or("1").parse::<u32>().unwrap();
-        }
-    }
-
-    // --until-success
-    let mut has_until_success = false;
-    if matches.occurrences_of("until_success") > 0 {
-        has_until_success = true;
-    }
-
-    // Stdin
-    let mut has_stdin = false;
-    let mut full_stdin = "".to_string();
-    if (matches.occurrences_of("stdin") > 0) || (!stdin_isatty()) {
-        has_stdin = true;
+    // Get any lines from stdin
+    if opt.stdin || !stdin_isatty() {
         let stdin = io::stdin();
-        for linee in stdin.lock().lines() {
-            items.push(linee.unwrap().to_owned());
+        for line in stdin.lock().lines() {
+            items.push(line.unwrap().to_owned())
         }
-
-        num = matches.value_of("num").unwrap_or(&items.len().to_string()).parse::<f64>().unwrap();
     }
 
     // Counters
-    let mut count = 0.0;
-    let mut adjusted_count = 0.0 + offset;
-    let mut result;
 
-    while count < num {
+    let num = if let Some(num) = opt.num {
+        num
+    } else if !items.is_empty() {
+        items.len() as f64
+    } else {
+        f64::INFINITY
+    };
+
+    let mut has_matched = false;
+
+    let mut summary = Summary { successes: 0, failures: Vec::new() };
+
+    let counter = Counter { start: opt.offset, end: num, step_by: opt.count_by};
+    for (count, actual_count) in counter.enumerate() {
 
         // Time Start
-        loop_start = Instant::now();
+        let loop_start = Instant::now();
 
         // Set counters before execution
-        env::set_var("COUNT", adjusted_count.to_string());
-        env::set_var("ACTUALCOUNT", (count as i64).to_string());
+        env::set_var("COUNT", count.to_string());
+        env::set_var("ACTUALCOUNT", actual_count.to_string());
 
-        // Get iterated item
-        match items.get(count as usize){
-            Some(item) => { env::set_var("ITEM", item); },
-            None => {}
+        // Set iterated item as environment variable
+        if let Some(item) = items.get(count) {
+            env::set_var("ITEM", item);
         }
 
         // Main executor
-        result = Exec::shell(&input_s).stdout(Redirection::Pipe).stderr(Redirection::Merge).capture().unwrap();
+        let result = Exec::shell(&opt.input)
+            .stdout(Redirection::Pipe)
+            .stderr(Redirection::Merge)
+            .capture().unwrap();
 
         // Print the results
         for line in result.stdout_str().lines() {
@@ -174,37 +79,44 @@ fn main() {
 
             // --until-contains
             // We defer loop breaking until the entire result is printed.
-            if has_until_contains {
-                if line.contains(until_contains){
-                    has_matched=true;
+            if let Some(string) = &opt.until_contains {
+                if line.contains(string){
+                    has_matched = true;
                 }
             }
 
             // --until-match
-            if has_until_match {
-                match until_match_re.captures(&line){
-                    Some(_item) => { has_matched=true; }
-                    None => {}
+            if let Some(regex) = &opt.until_match {
+                if regex.captures(&line).is_some() {
+                    has_matched = true;
                 }
             }
 
             // --until-error
-            if has_until_error {
-                if has_until_error_code {
-                    // TODO: might want to print the error code when it doesn't match
-                    if result.exit_status == ExitStatus::Exited(until_error_code) {
+            if let Some(error_code) = &opt.until_error {
+                match error_code {
+                    ErrorCode::Any => if !result.exit_status.success() {
                         has_matched = true;
+                    },
+                    ErrorCode::Code(code) =>  {
+                        if result.exit_status == ExitStatus::Exited(*code) {
+                            has_matched = true;
+                        }
                     }
-                } else if !result.exit_status.success() {
-                    has_matched = true;
                 }
             }
 
             // --until-success
-            if has_until_success {
-                if result.exit_status.success() {
+            if opt.until_success && result.exit_status.success() {
                     has_matched = true;
-                }
+            }
+        }
+
+        if opt.summary {
+            match result.exit_status {
+                ExitStatus::Exited(0)  =>  summary.successes += 1,
+                ExitStatus::Exited(n) => summary.failures.push(n),
+                _ => summary.failures.push(UNKONWN_EXIT_CODE),
             }
         }
 
@@ -213,40 +125,160 @@ fn main() {
             break;
         }
 
-        // Increment counters
-        count = count + 1.0;
-        adjusted_count = adjusted_count + count_by;
-
-        // The main delay-until-next-iteration loop
-        loop {
-
-            // Finish if we're over our duration
-            if has_for_duration {
-                now = Instant::now();
-                since = now.duration_since(program_start);
-                match for_duration.checked_sub(since) {
-                    None => return,
-                    Some(_time) => { },
-                }
+        // Finish if we're over our duration
+        if let Some(duration) = opt.for_duration {
+            let since = Instant::now().duration_since(program_start);
+            if since >= duration {
+                break;
             }
+        }
 
-            // Finish if our time until has passed
-            // In this location, the loop will execute at least once,
-            // even if the start time is beyond the until time.
-            if has_until_time{
-                match SystemTime::now().duration_since(until_time) {
-                    Ok(_t) => return,
-                    Err(_e) => {  },
-                }
+        // Finish if our time until has passed
+        // In this location, the loop will execute at least once,
+        // even if the start time is beyond the until time.
+        if let Some(until_time) = opt.until_time {
+            if SystemTime::now().duration_since(until_time).is_ok() {
+                break;
             }
+        }
 
-            // Delay until next iteration time
-            now = Instant::now();
-            since = now.duration_since(loop_start);
-            match every.checked_sub(since) {
-                None => break,
-                Some(_time) => continue,
-            }
+        // Delay until next iteration time
+        let since = Instant::now().duration_since(loop_start);
+        if let Some(time) = opt.every.checked_sub(since) {
+            thread::sleep(time);
+        }
+    }
+
+    if opt.summary {
+        summary.print()
+    }
+}
+
+#[derive(StructOpt, Debug)]
+#[structopt(name = "loop", author = "Rich Jones <miserlou@gmail.com>",
+            about = "UNIX's missing `loop` command")]
+struct Opt {
+    /// The command to be looped
+    #[structopt()]
+    input: String,
+
+    /// Number of iterations to execute
+    #[structopt(short = "n", long = "num")]
+    num: Option<f64>,
+
+    /// Amount to increment the counter by
+    #[structopt(short = "b", long = "count-by", default_value = "1")]
+    count_by: f64,
+
+    /// Amount to offset the initial counter by
+    #[structopt(short = "o", long = "offset", default_value = "0")]
+    offset: f64,
+
+    /// How often to iterate. ex., 5s, 1h1m1s1ms1us
+    #[structopt(short = "e", long = "every", default_value = "1us",
+                parse(try_from_str = "parse_duration"))]
+    every: Duration,
+
+    /// A comma-separated list of values, placed into 4ITEM. ex., red,green,blue
+    #[structopt(short = "f", long = "for", parse(from_str = "get_values"))]
+    ffor: Option<Vec<String>>,
+
+    /// Keep going until the output contains this string
+    #[structopt(short = "d", long = "for-duration", parse(try_from_str = "parse_duration"))]
+    for_duration: Option<Duration>,
+
+    /// Keep going until the output contains this string
+    #[structopt(short = "c", long = "until-contains")]
+    until_contains: Option<String>,
+
+    /// Keep going until the output matches this regular expression
+    #[structopt(short = "m", long = "until-match", parse(try_from_str = "Regex::new"))]
+    until_match: Option<Regex>,
+
+    /// Keep going until a future time, ex. "2018-04-20 04:20:00" (Times in UTC.)
+    #[structopt(short = "t", long = "until-time", parse(try_from_str = "parse_rfc3339_weak"))]
+    until_time: Option<SystemTime>,
+
+    /// Keep going until the command exit status is non-zero, or the value given
+    #[structopt(short = "r", long = "until-error", parse(from_str = "get_error_code"))]
+    until_error: Option<ErrorCode>,
+
+    /// Keep going until the command exit status is non-zero, or the value given
+    #[structopt(short = "s", long = "until-success")]
+    until_success: bool,
+
+    /// Read from standard input
+    #[structopt(short = "i", long = "stdin")]
+    stdin: bool,
+
+    /// Provide a summary
+    #[structopt(long = "summary")]
+    summary: bool
+}
+
+#[derive(Debug)]
+enum ErrorCode {
+    Any,
+    Code(u32),
+}
+
+fn get_error_code(input: &&str) -> ErrorCode {
+    if let Ok(code) = input.parse::<u32>() {
+        ErrorCode::Code(code)
+    } else {
+        ErrorCode::Any
+    }
+}
+
+fn get_values(input: &&str) -> Vec<String> {
+    if input.contains('\n'){
+        input.split('\n').map(String::from).collect()
+    } else if input.contains(','){
+        input.split(',').map(String::from).collect()
+    } else {
+        input.split(' ').map(String::from).collect()
+    }
+}
+
+struct Counter {
+    start: f64,
+    end: f64,
+    step_by: f64,
+}
+
+#[derive(Debug)]
+struct Summary {
+    successes: u32,
+    failures: Vec<u32>
+}
+
+impl Summary {
+    fn print(self) {
+        let total = self.successes + self.failures.len() as u32;
+
+        let errors = if self.failures.is_empty() {
+            String::from("0")
+        } else {
+            format!("{} ({})", self.failures.len(), self.failures.into_iter()
+                    .map(|f| (-(f as i32)).to_string())
+                    .collect::<Vec<String>>()
+                    .join(", "))
+        };
+
+        println!("Total runs:\t{}", total);
+        println!("Successes:\t{}", self.successes);
+        println!("Failures:\t{}", errors);
+    }
+}
+
+impl Iterator for Counter {
+    type Item = f64;
+    fn next(&mut self) -> Option<Self::Item> {
+        self.start += self.step_by;
+        if self.start <= self.end {
+            Some(self.start)
+        } else {
+            None
         }
     }
 }

@@ -28,6 +28,9 @@ Loops in bash are surprisingly complicated and fickle! I wanted a simple and int
  * Iterate over the **standard input**!
     - `$ cat files_to_create.txt | loop 'touch $ITEM'`
 
+ * Get a **summary** of the runs!
+    - `$ loop 'ls' --for-duration 10min --summary`
+
  * ..and **much more!**
 
  And so `loop` was born!
@@ -137,6 +140,25 @@ There's also an `$ACTUALCOUNT`:
     2 1
     4 2
     [ .. ]
+
+You can get a summary of successes and failures (based on exit codes) with `--summary`:
+
+    $ loop 'echo $COUNT' --num 3 --summary
+    0
+    1
+    2
+    Total runs:  3
+    Successes:   3
+    Failures:    0
+
+or
+
+    $ loop 'ls -foobarbatz' --num 3 --summary
+    [ .. ]
+    Total runs:  3
+    Successes:   0
+    Failures:    3 (-1, -1, -1)
+
 
 ### Timed Loops
 
