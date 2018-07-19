@@ -143,23 +143,21 @@ There's also an `$ACTUALCOUNT`:
 
 You can get a summary of successes and failures (based on exit codes) with `--summary`:
 
-    $ loop 'echo $COUNT' --num 5
+    $ loop 'echo $COUNT' --num 3 --summary
     0
     1
     2
-    3
-    4
-    Total runs:  5
-    Successes:   5
+    Total runs:  3
+    Successes:   3
     Failures:    0
 
 or
 
-    $ loop 'ls -foobarbatz' --num 3
-    ...
+    $ loop 'ls -foobarbatz' --num 3 --summary
+    [ .. ]
     Total runs:  3
     Successes:   0
-    Failures:    3 (-1, -1, 1)
+    Failures:    3 (-1, -1, -1)
 
 
 ### Timed Loops
