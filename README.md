@@ -68,6 +68,10 @@ Loops in bash are surprisingly complicated and fickle! I wanted a simple and int
 
 _Issues related to this package are tracked [here](https://github.com/Miserlou/Loop/issues/4)._
 
+There is also an AUR for Arch Linux users, but I don't maintain it, so use it at your own risk:
+
+    $ yaourt -S loop
+
 ### OSX
 
 If you're a Homebrew user:
