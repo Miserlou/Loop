@@ -54,7 +54,12 @@ fn main() {
     let mut tmpfile = tempfile::tempfile().unwrap();
     let mut summary = Summary { successes: 0, failures: Vec::new() };
 
-    let counter = Counter { start: 0.0, end: num, step_by: opt.count_by};
+    let counter = Counter { 
+            start: opt.offset, 
+            iters: 0.0,
+            end: num, 
+            step_by: opt.count_by
+    };
     for (count, actual_count) in counter.enumerate() {
 
         // Time Start
@@ -268,6 +273,7 @@ fn get_values(input: &&str) -> Vec<String> {
 
 struct Counter {
     start: f64,
+    iters: f64,
     end: f64,
     step_by: f64,
 }
@@ -301,7 +307,8 @@ impl Iterator for Counter {
     type Item = f64;
     fn next(&mut self) -> Option<Self::Item> {
         self.start += self.step_by;
-        if self.start <= self.end {
+        self.iters += 1.0;
+        if self.iters <= self.end {
             Some(self.start)
         } else {
             None
