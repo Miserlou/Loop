@@ -39,7 +39,6 @@ fn main() {
     }
 
     // Counters
-
     let num = if let Some(num) = opt.num {
         num
     } else if !items.is_empty() {
