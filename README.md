@@ -116,6 +116,7 @@ With no arguments, `loop` will simply repeatedly execute a command string as fas
 The amount this counter increments can be changed with `--count-by`:
 
     $ loop 'echo $COUNT' --count-by 2
+    0
     2
     4
     6

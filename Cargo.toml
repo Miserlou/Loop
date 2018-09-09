@@ -1,6 +1,6 @@
 [package]
 name = "loop-rs"
-version = "0.3.4"
+version = "0.3.5"
 authors = ["Rich Jones <miserlou@gmail.com>"]
 description = "UNIX's missing loop command"
 

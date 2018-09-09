@@ -55,7 +55,7 @@ fn main() {
     let mut summary = Summary { successes: 0, failures: Vec::new() };
 
     let counter = Counter { 
-            start: opt.offset, 
+            start: opt.offset - opt.count_by, 
             iters: 0.0,
             end: num, 
             step_by: opt.count_by
