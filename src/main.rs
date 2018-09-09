@@ -52,15 +52,16 @@ fn main() {
 
     let mut summary = Summary { successes: 0, failures: Vec::new() };
 
-    let counter = Counter { start: opt.offset, end: num, step_by: opt.count_by};
+    let counter = Counter { start: 0.0, end: num, step_by: opt.count_by};
     for (count, actual_count) in counter.enumerate() {
 
         // Time Start
         let loop_start = Instant::now();
 
         // Set counters before execution
-        env::set_var("COUNT", count.to_string());
-        env::set_var("ACTUALCOUNT", actual_count.to_string());
+        // THESE ARE FLIPPED AND I CAN'T UNFLIP THEM.
+        env::set_var("ACTUALCOUNT", count.to_string());
+        env::set_var("COUNT", actual_count.to_string());
 
         // Set iterated item as environment variable
         if let Some(item) = items.get(count) {
