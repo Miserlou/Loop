@@ -4,10 +4,12 @@ extern crate humantime;
 extern crate isatty;
 extern crate regex;
 extern crate subprocess;
+extern crate tempfile;
 
 use std::env;
 use std::f64;
-use std::io::{self, BufRead};
+use std::io::prelude::*;
+use std::io::{self, BufRead, SeekFrom};
 use std::thread;
 use std::time::{Duration, Instant, SystemTime};
 
@@ -49,6 +51,7 @@ fn main() {
 
     let mut has_matched = false;
 
+    let mut tmpfile = tempfile::tempfile().unwrap();
     let mut summary = Summary { successes: 0, failures: Vec::new() };
 
     let counter = Counter { start: 0.0, end: num, step_by: opt.count_by};
@@ -68,14 +71,24 @@ fn main() {
         }
 
         // Main executor
+        tmpfile.seek(SeekFrom::Start(0)).ok();
+        tmpfile.set_len(0).ok();
         let result = Exec::shell(&opt.input)
-            .stdout(Redirection::Pipe)
+            .stdout(Redirection::File(tmpfile.try_clone().unwrap()))
             .stderr(Redirection::Merge)
             .capture().unwrap();
 
         // Print the results
-        for line in result.stdout_str().lines() {
-            println!("{}", line);
+        let mut stdout = String::new();
+        tmpfile.seek(SeekFrom::Start(0)).ok();
+        tmpfile.read_to_string(&mut stdout).ok();
+        for line in stdout.lines() {
+            // --only-last
+            // If we only want output from the last execution,
+            // defer printing until later
+            if !opt.only_last {
+                println!("{}", line);
+            }
 
             // --until-contains
             // We defer loop breaking until the entire result is printed.
@@ -149,6 +162,15 @@ fn main() {
         }
     }
 
+    if opt.only_last {
+        let mut stdout = String::new();
+        tmpfile.seek(SeekFrom::Start(0)).ok();
+        tmpfile.read_to_string(&mut stdout).ok();
+        for line in stdout.lines() {
+            println!("{}", line);
+        }
+    }
+
     if opt.summary {
         summary.print()
     }
@@ -206,6 +228,10 @@ struct Opt {
     /// Keep going until the command exit status is non-zero, or the value given
     #[structopt(short = "s", long = "until-success")]
     until_success: bool,
+
+    /// Only print the output of the last execution of the command
+    #[structopt(short = "l", long = "only-last")]
+    only_last: bool,
 
     /// Read from standard input
     #[structopt(short = "i", long = "stdin")]
