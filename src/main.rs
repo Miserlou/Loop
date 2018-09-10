@@ -109,25 +109,25 @@ fn main() {
                     has_matched = true;
                 }
             }
+        }
 
-            // --until-error
-            if let Some(error_code) = &opt.until_error {
-                match error_code {
-                    ErrorCode::Any => if !result.exit_status.success() {
+        // --until-error
+        if let Some(error_code) = &opt.until_error {
+            match error_code {
+                ErrorCode::Any => if !result.exit_status.success() {
+                    has_matched = true;
+                },
+                ErrorCode::Code(code) =>  {
+                    if result.exit_status == ExitStatus::Exited(*code) {
                         has_matched = true;
-                    },
-                    ErrorCode::Code(code) =>  {
-                        if result.exit_status == ExitStatus::Exited(*code) {
-                            has_matched = true;
-                        }
                     }
                 }
             }
+        }
 
-            // --until-success
-            if opt.until_success && result.exit_status.success() {
-                    has_matched = true;
-            }
+        // --until-success
+        if opt.until_success && result.exit_status.success() {
+                has_matched = true;
         }
 
         if opt.summary {
