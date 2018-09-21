@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate structopt;
 extern crate humantime;
-extern crate isatty;
+extern crate atty;
 extern crate regex;
 extern crate subprocess;
 extern crate tempfile;
@@ -14,7 +14,6 @@ use std::thread;
 use std::time::{Duration, Instant, SystemTime};
 
 use humantime::{parse_duration, parse_rfc3339_weak};
-use isatty::{stdin_isatty};
 use regex::Regex;
 use subprocess::{Exec, ExitStatus, Redirection};
 use structopt::StructOpt;
@@ -33,7 +32,7 @@ fn main() {
     let mut items = if let Some(items) = opt.ffor { items.clone() } else { vec![] };
 
     // Get any lines from stdin
-    if opt.stdin || !stdin_isatty() {
+    if opt.stdin || atty::isnt(atty::Stream::Stdin) {
         let stdin = io::stdin();
         for line in stdin.lock().lines() {
             items.push(line.unwrap().to_owned())
