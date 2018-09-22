@@ -53,10 +53,10 @@ fn main() {
     let mut tmpfile = tempfile::tempfile().unwrap();
     let mut summary = Summary { successes: 0, failures: Vec::new() };
 
-    let counter = Counter { 
-            start: opt.offset - opt.count_by, 
+    let counter = Counter {
+            start: opt.offset - opt.count_by,
             iters: 0.0,
-            end: num, 
+            end: num,
             step_by: opt.count_by
     };
     for (count, actual_count) in counter.enumerate() {
@@ -209,7 +209,7 @@ struct Opt {
     #[structopt(short = "f", long = "for", parse(from_str = "get_values"))]
     ffor: Option<Vec<String>>,
 
-    /// Keep going until the output contains this string
+    /// Keep going until the duration has elaspsed (example 1m30s)
     #[structopt(short = "d", long = "for-duration", parse(try_from_str = "parse_duration"))]
     for_duration: Option<Duration>,
 
