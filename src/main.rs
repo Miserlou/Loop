@@ -209,7 +209,7 @@ struct Opt {
     #[structopt(short = "f", long = "for", parse(from_str = "get_values"))]
     ffor: Option<Vec<String>>,
 
-    /// Keep going until the duration has elaspsed (example 1m30s)
+    /// Keep going until the duration has elapsed (example 1m30s)
     #[structopt(short = "d", long = "for-duration", parse(try_from_str = "parse_duration"))]
     for_duration: Option<Duration>,
 
