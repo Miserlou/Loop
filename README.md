@@ -17,7 +17,7 @@ Loops in bash are surprisingly complicated and fickle! I wanted a simple and int
    - `$ loop 'touch $COUNT.txt' --count-by 5`
 
  * Loop **until output matches** a condition!
-   - `$ loop './get_response_code' --until-contains 200`
+   - `$ loop --until-contains 200 -- ./get_response_code.sh --site mysite.biz`
 
  * Loop **until a certain time**!
    - `$ loop './poke_server' --for-duration 8h`
@@ -37,6 +37,7 @@ Loops in bash are surprisingly complicated and fickle! I wanted a simple and int
 
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
+
 - [Installation](#installation)
   - [Linux](#linux)
   - [OSX](#osx)
@@ -53,9 +54,11 @@ Loops in bash are surprisingly complicated and fickle! I wanted a simple and int
   - [Waiting for a file to be created](#waiting-for-a-file-to-be-created)
   - [Create a backup for all files in a directory](#create-a-backup-for-all-files-in-a-directory)
   - [Keep trying a failing script until it passes, up to 5 times](#keep-trying-a-failing-script-until-it-passes-up-to-5-times)
+  - [Comparison with GNU Parallel](#comparison-with-gnu-parallel)
   - [More examples](#more-examples)
 - [Contributing](#contributing)
 - [License](#license)
+
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 ## Installation
@@ -97,6 +100,15 @@ If you're a Homebrew user:
 With no arguments, `loop` will simply repeatedly execute a command string as fast as it can until `^C` (control + C) is sent.
 
     $ loop 'echo hello'
+    hello
+    hello
+    hello
+    hello
+    [ .. ]
+
+You can also use double dashes ( ` -- ` ) to seperate arguments:
+
+    $ loop -- echo hello
     hello
     hello
     hello
@@ -322,6 +334,10 @@ With `loop`, it's a simple one liner:
     loop './do_thing.sh' --every 15s --until-success --num 5 
 
 Which will do the thing every 15 seconds until it succeeds, for a maximum of five times.
+
+### Comparison with GNU Parallel
+
+This [thread on Reddit](https://www.reddit.com/r/debian/comments/9ha2dj/ive_written_a_useful_system_utility_how_do_i_get/e6abuht/) with GNU Parallel author Ole Tange has some interesting side-by-side comparisons between `loop` and `parallel`.
 
 ### More examples
 
