@@ -12,7 +12,7 @@ readme = "README.md"
 license = "MIT"
 
 [dependencies]
-structopt = { git = "https://github.com/TeXitoi/structopt" }
+structopt = "0.2" 
 humantime = "1.1.1"
 atty = "0.2"
 regex = "1.0.0"
