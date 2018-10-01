@@ -77,7 +77,7 @@ fn main() {
         // Main executor
         tmpfile.seek(SeekFrom::Start(0)).ok();
         tmpfile.set_len(0).ok();
-        let result = Exec::shell(&opt.input)
+        let result = Exec::shell(&opt.input.join(" "))
             .stdout(Redirection::File(tmpfile.try_clone().unwrap()))
             .stderr(Redirection::Merge)
             .capture().unwrap();
@@ -184,10 +184,6 @@ fn main() {
 #[structopt(name = "loop", author = "Rich Jones <miserlou@gmail.com>",
             about = "UNIX's missing `loop` command")]
 struct Opt {
-    /// The command to be looped
-    #[structopt()]
-    input: String,
-
     /// Number of iterations to execute
     #[structopt(short = "n", long = "num")]
     num: Option<f64>,
@@ -243,7 +239,12 @@ struct Opt {
 
     /// Provide a summary
     #[structopt(long = "summary")]
-    summary: bool
+    summary: bool,
+
+    /// The command to be looped
+    #[structopt(raw(multiple="true"))]
+    input: Vec<String>
+
 }
 
 #[derive(Debug)]
