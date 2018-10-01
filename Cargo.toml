@@ -1,6 +1,6 @@
 [package]
 name = "loop-rs"
-version = "0.3.5"
+version = "0.4.0"
 authors = ["Rich Jones <miserlou@gmail.com>"]
 description = "UNIX's missing loop command"
 
@@ -12,7 +12,7 @@ readme = "README.md"
 license = "MIT"
 
 [dependencies]
-structopt = "0.2"
+structopt = { git = "https://github.com/TeXitoi/structopt" }
 humantime = "1.1.1"
 atty = "0.2"
 regex = "1.0.0"
