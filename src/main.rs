@@ -129,6 +129,11 @@ fn main() {
                 has_matched = true;
         }
 
+        // --until-fail
+        if opt.until_fail && !(result.exit_status.success()) {
+                has_matched = true;
+        }
+
         if opt.summary {
             match result.exit_status {
                 ExitStatus::Exited(0)  =>  summary.successes += 1,
@@ -202,7 +207,7 @@ struct Opt {
     every: Duration,
 
     /// A comma-separated list of values, placed into 4ITEM. ex., red,green,blue
-    #[structopt(short = "f", long = "for", parse(from_str = "get_values"))]
+    #[structopt(long = "for", parse(from_str = "get_values"))]
     ffor: Option<Vec<String>>,
 
     /// Keep going until the duration has elapsed (example 1m30s)
@@ -225,9 +230,13 @@ struct Opt {
     #[structopt(short = "r", long = "until-error", parse(from_str = "get_error_code"))]
     until_error: Option<ErrorCode>,
 
-    /// Keep going until the command exit status is non-zero, or the value given
+    /// Keep going until the command exit status is zero
     #[structopt(short = "s", long = "until-success")]
     until_success: bool,
+
+    /// Keep going until the command exit status is non-zero
+    #[structopt(short = "f", long = "until-fail")]
+    until_fail: bool,
 
     /// Only print the output of the last execution of the command
     #[structopt(short = "l", long = "only-last")]
