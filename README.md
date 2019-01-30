@@ -19,6 +19,9 @@ Loops in bash are surprisingly complicated and fickle! I wanted a simple and int
  * Loop **until output matches** a condition!
    - `$ loop --until-contains 200 -- ./get_response_code.sh --site mysite.biz`
 
+ * Loop **until output changes between invocations**!
+   - `$ loop --until-changes date +%s`
+
  * Loop **until a certain time**!
    - `$ loop './poke_server' --for-duration 8h`
 
@@ -217,6 +220,12 @@ Or until a certain date/time with `--until-time`:
     666
     $ 
 
+`loop` can iterate until the output changes with `--until-changes`:
+
+    $ loop --only-last -e 1s 'date +%s' --until-changes
+    1548884135
+    $
+
 Or until a program succeeds with `--until-success`:
 
     $ loop 'if (( RANDOM % 2 )); then (echo "TRUE"; true); else (echo "FALSE"; false); fi' --until-success
@@ -255,6 +264,18 @@ And can read from the standard input via pipes:
     $ ls
     hello.jpg 
     goodbye.jpg
+
+This can be combined with various flags, such as `--until-changes`:
+
+    $ printf "%s\n" 1 1 3 | loop --until-changes echo '$ITEM'
+    1
+    1
+    3
+
+    $ seq 10 | loop --until-changes echo '$ITEM'
+    1
+    2
+
 
 You can also easily pipe lists to `loop`:
 
