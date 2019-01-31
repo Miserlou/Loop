@@ -222,7 +222,7 @@ Or until a certain date/time with `--until-time`:
 
 `loop` can iterate until the output changes with `--until-changes`:
 
-    $ loop --only-last -e 1s 'date +%s' --until-changes
+    $ loop --only-last --every 1s --until-changes -- 'date +%s' 
     1548884135
     $
 
@@ -267,15 +267,14 @@ And can read from the standard input via pipes:
 
 This can be combined with various flags, such as `--until-changes`:
 
-    $ printf "%s\n" 1 1 3 | loop --until-changes echo '$ITEM'
+    $ printf "%s\n" 1 1 3 | loop --until-changes -- echo '$ITEM'
     1
     1
     3
 
-    $ seq 10 | loop --until-changes echo '$ITEM'
+    $ seq 10 | loop --until-changes -- echo '$ITEM'
     1
     2
-
 
 You can also easily pipe lists to `loop`:
 
@@ -376,4 +375,4 @@ Please feel free to work on any open ticket, especially any ticket marked with t
 
 ## License
 
-(c) Rich Jones, 2018. MIT License.
+(c) Rich Jones, 2018-2019+. MIT License.
