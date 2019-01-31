@@ -53,6 +53,8 @@ fn main() {
     let mut tmpfile = tempfile::tempfile().unwrap();
     let mut summary = Summary { successes: 0, failures: Vec::new() };
 
+    let mut previous_stdout = None;
+
     let counter = Counter {
             start: opt.offset - opt.count_by,
             iters: 0.0,
@@ -164,6 +166,15 @@ fn main() {
             }
         }
 
+        // --until-changes
+        if let Some(ref previous_stdout) = previous_stdout {
+            if *previous_stdout != stdout {
+                break;
+            }
+        } else {
+            previous_stdout = Some(stdout);
+        }
+
         // Delay until next iteration time
         let since = Instant::now().duration_since(loop_start);
         if let Some(time) = opt.every.checked_sub(since) {
@@ -217,6 +228,10 @@ struct Opt {
     /// Keep going until the output contains this string
     #[structopt(short = "c", long = "until-contains")]
     until_contains: Option<String>,
+
+    /// Keep going until the output changes
+    #[structopt(short = "C", long = "until-changes")]
+    until_changes: bool,
 
     /// Keep going until the output matches this regular expression
     #[structopt(short = "m", long = "until-match", parse(try_from_str = "Regex::new"))]
