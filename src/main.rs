@@ -166,10 +166,19 @@ fn main() {
             }
         }
 
-        // --until-changes
         if let Some(ref previous_stdout) = previous_stdout {
-            if *previous_stdout != stdout {
-                break;
+            // --until-changes
+            if opt.until_changes {
+                if *previous_stdout != stdout {
+                    break;
+                }
+            }
+
+            // --until-stagnates
+            if opt.until_stagnates {
+                if *previous_stdout == stdout {
+                    break;
+                }
             }
         } else {
             previous_stdout = Some(stdout);
@@ -232,6 +241,10 @@ struct Opt {
     /// Keep going until the output changes
     #[structopt(short = "C", long = "until-changes")]
     until_changes: bool,
+
+    /// Keep going until the output changes
+    #[structopt(short = "S", long = "until-stagnates")]
+    until_stagnates: bool,
 
     /// Keep going until the output matches this regular expression
     #[structopt(short = "m", long = "until-match", parse(try_from_str = "Regex::new"))]
