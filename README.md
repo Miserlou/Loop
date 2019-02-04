@@ -286,7 +286,7 @@ This can be combined with various flags, such as `--until-changes`:
 
 You can also easily pipe lists to `loop`:
 
-    $ ls | loop 'cp $ITEM $ITEM.bak'; ls
+    $ ls -1 | loop 'cp $ITEM $ITEM.bak'; ls
     hello.jpg
     hello.jpg.bak
 
@@ -316,11 +316,11 @@ Here are some handy things you can do with `loop`!
 
 If you have a lot of files and a program, but don't know which file is the one the program takes, you can loop over them until you find it:
 
-    $ ls | loop './my_program $ITEM' --until-success;
+    $ ls  -1 | loop './my_program $ITEM' --until-success;
 
 Or, if you have a list of files but need to find the one which causes your program to fail:
 
-    $ ls | loop './my_program $ITEM' --until-fail;
+    $ ls  -1 | loop './my_program $ITEM' --until-fail;
 
 ### Waiting for a website to appear online
 
@@ -344,7 +344,7 @@ If you've got a whole list of files that you want to create backup copies of, yo
 
     $ ls
     hello.jpg
-    $ ls | loop 'cp $ITEM $ITEM.bak'
+    $ ls -1 | loop 'cp $ITEM $ITEM.bak'
     $ ls
     hello.jpg
     hello.jpg.bak
