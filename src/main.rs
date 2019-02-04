@@ -174,8 +174,8 @@ fn main() {
                 }
             }
 
-            // --until-stagnates
-            if opt.until_stagnates {
+            // --until-same
+            if opt.until_same {
                 if *previous_stdout == stdout {
                     break;
                 }
@@ -243,8 +243,8 @@ struct Opt {
     until_changes: bool,
 
     /// Keep going until the output changes
-    #[structopt(short = "S", long = "until-stagnates")]
-    until_stagnates: bool,
+    #[structopt(short = "S", long = "until-same")]
+    until_same: bool,
 
     /// Keep going until the output matches this regular expression
     #[structopt(short = "m", long = "until-match", parse(try_from_str = "Regex::new"))]

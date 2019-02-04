@@ -19,10 +19,6 @@ Loops in bash are surprisingly complicated and fickle! I wanted a simple and int
  * Loop **until output matches** a condition!
    - `$ loop --until-contains 200 -- ./get_response_code.sh --site mysite.biz`
 
- * Loop **until output changes or stays the same between invocations**!
-   - `$ loop --until-changes date +%s`
-   - `$ loop --until-stagnates date +%s`
-
  * Loop **until a certain time**!
    - `$ loop './poke_server' --for-duration 8h`
 
@@ -34,6 +30,10 @@ Loops in bash are surprisingly complicated and fickle! I wanted a simple and int
 
  * Get a **summary** of the runs!
     - `$ loop 'ls' --for-duration 10min --summary`
+
+ * Run until output **changes or stays the same** between invocations!
+   - `$ loop --until-changes date +%s`
+   - `$ loop --until-same date +%s`
 
  * ..and **much more!**
 
@@ -227,10 +227,10 @@ Or until a certain date/time with `--until-time`:
     1548884135
     $
 
-`loop` can iterate until the output stays the same with `--until-stagnates`. This would be useful, for instance,
+`loop` can iterate until the output stays the same with `--until-same`. This would be useful, for instance,
 for monitoring with `du` until a download or copy finishes:
 
-    $ loop --every 1s --until-stagnates -- 'du -bs .' 
+    $ loop --every 1s --until-same -- 'du -bs .' 
     236861997       .
     $
 
