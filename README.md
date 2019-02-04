@@ -182,7 +182,7 @@ or
 
 If you only want the output of the last result, you can use `--only-last`:
 
-    $ loop 'echo $COUNT' --count-by 2 --num 50 --only-last
+    $ loop 'echo $COUNT' --count-by 2 --num 50 --offset 2 --only-last # Counting is 0-indexed
     100
 
 ### Timed Loops
