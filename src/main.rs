@@ -24,6 +24,11 @@ fn main() {
 
     // Load the CLI arguments
     let opt = Opt::from_args();
+    let count_precision = Opt::clap()
+        .get_matches()
+        .value_of("count_by")
+        .map(precision_of)
+        .unwrap_or(0);
 
     // Time
     let program_start = Instant::now();
@@ -69,7 +74,7 @@ fn main() {
         // Set counters before execution
         // THESE ARE FLIPPED AND I CAN'T UNFLIP THEM.
         env::set_var("ACTUALCOUNT", count.to_string());
-        env::set_var("COUNT", actual_count.to_string());
+        env::set_var("COUNT", format!("{:.*}", count_precision, actual_count));
 
         // Set iterated item as environment variable
         if let Some(item) = items.get(count) {
@@ -282,6 +287,19 @@ struct Opt {
     #[structopt(raw(multiple="true"))]
     input: Vec<String>
 
+}
+
+fn precision_of(s: &str) -> usize {
+    let after_point = match s.find('.') {
+        // '.' is ASCII so has len 1
+        Some(point) => point + 1,
+        None => return 0,
+    };
+    let exp = match s.find(&['e', 'E'][..]) {
+        Some(exp) => exp,
+        None => s.len(),
+    };
+    exp - after_point
 }
 
 #[derive(Debug)]
