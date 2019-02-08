@@ -39,7 +39,13 @@ fn main() {
         }
     }
 
-    // Counters
+    let joined_input = &opt.input.join(" ");
+    if joined_input == "" {
+        println!("No command supplied, exiting.");
+        return;
+    }
+
+    // Counters and State
     let num = if let Some(num) = opt.num {
         num
     } else if !items.is_empty() {
@@ -47,12 +53,9 @@ fn main() {
     } else {
         f64::INFINITY
     };
-
     let mut has_matched = false;
-
     let mut tmpfile = tempfile::tempfile().unwrap();
     let mut summary = Summary { successes: 0, failures: Vec::new() };
-
     let mut previous_stdout = None;
 
     let counter = Counter {
@@ -79,7 +82,7 @@ fn main() {
         // Main executor
         tmpfile.seek(SeekFrom::Start(0)).ok();
         tmpfile.set_len(0).ok();
-        let result = Exec::shell(&opt.input.join(" "))
+        let result = Exec::shell(joined_input)
             .stdout(Redirection::File(tmpfile.try_clone().unwrap()))
             .stderr(Redirection::Merge)
             .capture().unwrap();
