@@ -10,6 +10,7 @@ use std::env;
 use std::f64;
 use std::io::prelude::*;
 use std::io::{self, BufRead, SeekFrom};
+use std::process;
 use std::thread;
 use std::time::{Duration, Instant, SystemTime};
 
@@ -20,6 +21,9 @@ use structopt::StructOpt;
 
 static UNKONWN_EXIT_CODE: u32 = 99;
 
+// same exit code as use of `timeout` shell command
+static TIMEOUT_EXIT_CODE: i32 = 124;
+
 fn main() {
 
     // Load the CLI arguments
@@ -29,6 +33,8 @@ fn main() {
         .value_of("count_by")
         .map(precision_of)
         .unwrap_or(0);
+
+    let mut exit_status = 0;
 
     // Time
     let program_start = Instant::now();
@@ -88,6 +94,9 @@ fn main() {
         if let Some(duration) = opt.for_duration {
             let since = Instant::now().duration_since(program_start);
             if since >= duration {
+                if opt.error_duration {
+                    exit_status = TIMEOUT_EXIT_CODE
+                }
                 break;
             }
         }
@@ -174,8 +183,6 @@ fn main() {
             break;
         }
 
-
-
         if let Some(ref previous_stdout) = previous_stdout {
             // --until-changes
             if opt.until_changes {
@@ -213,6 +220,7 @@ fn main() {
     if opt.summary {
         summary.print()
     }
+    process::exit(exit_status);
 }
 
 #[derive(StructOpt, Debug)]
@@ -283,6 +291,10 @@ struct Opt {
     /// Read from standard input
     #[structopt(short = "i", long = "stdin")]
     stdin: bool,
+
+    /// Exit with timeout error code on duration
+    #[structopt(short = "D", long = "error-duration")]
+    error_duration: bool,
 
     /// Provide a summary
     #[structopt(long = "summary")]

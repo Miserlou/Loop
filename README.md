@@ -42,6 +42,7 @@ Loops in bash are surprisingly complicated and fickle! I wanted a simple and int
 <!-- START doctoc generated TOC please keep comment here to allow auto update -->
 <!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
+
 - [Installation](#installation)
   - [Linux](#linux)
   - [OSX](#osx)
@@ -58,6 +59,7 @@ Loops in bash are surprisingly complicated and fickle! I wanted a simple and int
   - [Waiting for a file to be created](#waiting-for-a-file-to-be-created)
   - [Create a backup for all files in a directory](#create-a-backup-for-all-files-in-a-directory)
   - [Keep trying a failing script until it passes, up to 5 times](#keep-trying-a-failing-script-until-it-passes-up-to-5-times)
+  - [Keep trying a failing script until timeout](#keep-trying-a-failing-script-until-timeout)
   - [Comparison with GNU Parallel](#comparison-with-gnu-parallel)
   - [More examples](#more-examples)
 - [Contributing](#contributing)
@@ -362,6 +364,16 @@ With `loop`, it's a simple one liner:
     loop './do_thing.sh' --every 15s --until-success --num 5 
 
 Which will do the thing every 15 seconds until it succeeds, for a maximum of five times.
+
+### Keep trying a failing script until timeout
+
+If dealing with a command or script that occasionally fails in a CI environment, you may want to try for a given amount of time before giving up and failing the build.
+
+With `loop` you can do that with:
+
+    loop './do_thing.sh' --every 5s --until-success --for-duration 180s --duration-error
+
+Which will do the thing every 5 seconds until it succeeds or until the duration is met. If the duration is met, it will give the same non-zero return as the `timeout` command 124.
 
 ### Comparison with GNU Parallel
 
