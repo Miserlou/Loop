@@ -90,6 +90,26 @@ fn main() {
             env::set_var("ITEM", item);
         }
 
+        // Finish if we're over our duration
+        if let Some(duration) = opt.for_duration {
+            let since = Instant::now().duration_since(program_start);
+            if since >= duration {
+                if opt.error_duration {
+                    exit_status = TIMEOUT_EXIT_CODE
+                }
+                break;
+            }
+        }
+
+        // Finish if our time until has passed
+        // In this location, the loop will execute at least once,
+        // even if the start time is beyond the until time.
+        if let Some(until_time) = opt.until_time {
+            if SystemTime::now().duration_since(until_time).is_ok() {
+                break;
+            }
+        }
+
         // Main executor
         tmpfile.seek(SeekFrom::Start(0)).ok();
         tmpfile.set_len(0).ok();
@@ -161,26 +181,6 @@ fn main() {
         // Finish if we matched
         if has_matched {
             break;
-        }
-
-        // Finish if we're over our duration
-        if let Some(duration) = opt.for_duration {
-            let since = Instant::now().duration_since(program_start);
-            if since >= duration {
-                if opt.error_duration {
-                    exit_status = TIMEOUT_EXIT_CODE
-                }
-                break;
-            }
-        }
-
-        // Finish if our time until has passed
-        // In this location, the loop will execute at least once,
-        // even if the start time is beyond the until time.
-        if let Some(until_time) = opt.until_time {
-            if SystemTime::now().duration_since(until_time).is_ok() {
-                break;
-            }
         }
 
         if let Some(ref previous_stdout) = previous_stdout {
