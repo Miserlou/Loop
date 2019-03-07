@@ -7,6 +7,7 @@ extern crate tempfile;
 
 use std::env;
 use std::f64;
+use std::fs::File;
 use std::io::prelude::*;
 use std::io::{self, BufRead, SeekFrom};
 use std::process;
@@ -113,27 +114,7 @@ fn main() {
 
         // Print the results
         let mut stdout = String::new();
-        tmpfile.seek(SeekFrom::Start(0)).ok();
-        tmpfile.read_to_string(&mut stdout).ok();
-        for line in stdout.lines() {
-            // --only-last
-            // If we only want output from the last execution,
-            // defer printing until later
-            if !opt.only_last {
-                println!("{}", line);
-            }
-
-            // --until-contains
-            // We defer loop breaking until the entire result is printed.
-            if let Some(string) = &opt.until_contains {
-                has_matched = line.contains(string);
-            }
-
-            // --until-match
-            if let Some(regex) = &opt.until_match {
-                has_matched = regex.captures(&line).is_some();
-            }
-        }
+        print_results(&opt, &mut stdout, &mut has_matched, &mut tmpfile);
 
         // --until-error
         if let Some(error_code) = &opt.until_error {
@@ -204,6 +185,31 @@ fn main() {
         summary.print()
     }
     process::exit(exit_status);
+}
+
+fn print_results(opt: &Opt, stdout: &mut String, has_matched: &mut bool, tmpfile: &mut File) {
+    tmpfile.seek(SeekFrom::Start(0)).ok();
+    tmpfile.read_to_string(stdout).ok();
+
+    stdout.lines().for_each(|line| {
+        // --only-last
+        // If we only want output from the last execution,
+        // defer printing until later
+        if !opt.only_last {
+            println!("{}", line);
+        }
+
+        // --until-contains
+        // We defer loop breaking until the entire result is printed.
+        if let Some(ref string) = opt.until_contains {
+            *has_matched = line.contains(string);
+        }
+
+        // --until-match
+        if let Some(ref regex) = opt.until_match {
+            *has_matched = regex.captures(&line).is_some();
+        }
+    })
 }
 
 #[derive(StructOpt, Debug)]
