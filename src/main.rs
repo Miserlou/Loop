@@ -1,8 +1,7 @@
-#[macro_use]
-extern crate structopt;
 extern crate atty;
 extern crate humantime;
 extern crate regex;
+extern crate structopt;
 extern crate subprocess;
 extern crate tempfile;
 
@@ -193,17 +192,13 @@ fn main() {
 
         if let Some(ref previous_stdout) = previous_stdout {
             // --until-changes
-            if opt.until_changes {
-                if *previous_stdout != stdout {
-                    break;
-                }
+            if opt.until_changes && *previous_stdout != stdout {
+                break;
             }
 
             // --until-same
-            if opt.until_same {
-                if *previous_stdout == stdout {
-                    break;
-                }
+            if opt.until_same && *previous_stdout == stdout {
+                break;
             }
         } else {
             previous_stdout = Some(stdout);
