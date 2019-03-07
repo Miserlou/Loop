@@ -113,8 +113,8 @@ fn main() {
             .unwrap();
 
         // Print the results
-        let mut stdout = String::new();
-        print_results(&opt, &mut stdout, &mut has_matched, &mut tmpfile);
+        let stdout = String::from_temp_start(&mut tmpfile);
+        print_results(&opt, &mut has_matched, &stdout);
 
         // --until-error
         check_error_code(&opt.until_error, &mut has_matched, result.exit_status);
@@ -164,10 +164,9 @@ fn main() {
     }
 
     if opt.only_last {
-        let mut stdout = String::new();
-        tmpfile.seek(SeekFrom::Start(0)).ok();
-        tmpfile.read_to_string(&mut stdout).ok();
-        stdout.lines().for_each(|line| println!("{}", line));
+        String::from_temp_start(&mut tmpfile)
+            .lines()
+            .for_each(|line| println!("{}", line));
     }
 
     if opt.summary {
@@ -176,10 +175,7 @@ fn main() {
     process::exit(exit_status);
 }
 
-fn print_results(opt: &Opt, stdout: &mut String, has_matched: &mut bool, tmpfile: &mut File) {
-    tmpfile.seek(SeekFrom::Start(0)).ok();
-    tmpfile.read_to_string(stdout).ok();
-
+fn print_results(opt: &Opt, has_matched: &mut bool, stdout: &str) {
     stdout.lines().for_each(|line| {
         // --only-last
         // If we only want output from the last execution,
@@ -216,6 +212,19 @@ fn check_error_code(
             }
         }
         _ => (),
+    }
+}
+
+trait StringFromTempfileStart {
+    fn from_temp_start(tmpfile: &mut File) -> String;
+}
+
+impl StringFromTempfileStart for String {
+    fn from_temp_start(tmpfile: &mut File) -> String {
+        let mut stdout = String::new();
+        tmpfile.seek(SeekFrom::Start(0)).ok();
+        tmpfile.read_to_string(&mut stdout).ok();
+        stdout
     }
 }
 
