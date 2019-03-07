@@ -138,16 +138,12 @@ fn main() {
             // --until-contains
             // We defer loop breaking until the entire result is printed.
             if let Some(string) = &opt.until_contains {
-                if line.contains(string) {
-                    has_matched = true;
-                }
+                has_matched = line.contains(string);
             }
 
             // --until-match
             if let Some(regex) = &opt.until_match {
-                if regex.captures(&line).is_some() {
-                    has_matched = true;
-                }
+                has_matched = regex.captures(&line).is_some();
             }
         }
 
@@ -155,9 +151,7 @@ fn main() {
         if let Some(error_code) = &opt.until_error {
             match error_code {
                 ErrorCode::Any => {
-                    if !result.exit_status.success() {
-                        has_matched = true;
-                    }
+                    has_matched = !result.exit_status.success();
                 }
                 ErrorCode::Code(code) => {
                     if result.exit_status == ExitStatus::Exited(*code) {
