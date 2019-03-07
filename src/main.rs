@@ -1,7 +1,7 @@
 #[macro_use]
 extern crate structopt;
-extern crate humantime;
 extern crate atty;
+extern crate humantime;
 extern crate regex;
 extern crate subprocess;
 extern crate tempfile;
@@ -16,8 +16,8 @@ use std::time::{Duration, Instant, SystemTime};
 
 use humantime::{parse_duration, parse_rfc3339_weak};
 use regex::Regex;
-use subprocess::{Exec, ExitStatus, Redirection};
 use structopt::StructOpt;
+use subprocess::{Exec, ExitStatus, Redirection};
 
 static UNKONWN_EXIT_CODE: u32 = 99;
 
@@ -25,7 +25,6 @@ static UNKONWN_EXIT_CODE: u32 = 99;
 static TIMEOUT_EXIT_CODE: i32 = 124;
 
 fn main() {
-
     // Load the CLI arguments
     let opt = Opt::from_args();
     let count_precision = Opt::clap()
@@ -40,7 +39,11 @@ fn main() {
     let program_start = Instant::now();
 
     // Number of iterations
-    let mut items = if let Some(items) = opt.ffor { items.clone() } else { vec![] };
+    let mut items = if let Some(items) = opt.ffor {
+        items.clone()
+    } else {
+        vec![]
+    };
 
     // Get any lines from stdin
     if opt.stdin || atty::isnt(atty::Stream::Stdin) {
@@ -66,17 +69,19 @@ fn main() {
     };
     let mut has_matched = false;
     let mut tmpfile = tempfile::tempfile().unwrap();
-    let mut summary = Summary { successes: 0, failures: Vec::new() };
+    let mut summary = Summary {
+        successes: 0,
+        failures: Vec::new(),
+    };
     let mut previous_stdout = None;
 
     let counter = Counter {
-            start: opt.offset - opt.count_by,
-            iters: 0.0,
-            end: num,
-            step_by: opt.count_by
+        start: opt.offset - opt.count_by,
+        iters: 0.0,
+        end: num,
+        step_by: opt.count_by,
     };
     for (count, actual_count) in counter.enumerate() {
-
         // Time Start
         let loop_start = Instant::now();
 
@@ -116,7 +121,8 @@ fn main() {
         let result = Exec::shell(joined_input)
             .stdout(Redirection::File(tmpfile.try_clone().unwrap()))
             .stderr(Redirection::Merge)
-            .capture().unwrap();
+            .capture()
+            .unwrap();
 
         // Print the results
         let mut stdout = String::new();
@@ -133,7 +139,7 @@ fn main() {
             // --until-contains
             // We defer loop breaking until the entire result is printed.
             if let Some(string) = &opt.until_contains {
-                if line.contains(string){
+                if line.contains(string) {
                     has_matched = true;
                 }
             }
@@ -149,10 +155,12 @@ fn main() {
         // --until-error
         if let Some(error_code) = &opt.until_error {
             match error_code {
-                ErrorCode::Any => if !result.exit_status.success() {
-                    has_matched = true;
-                },
-                ErrorCode::Code(code) =>  {
+                ErrorCode::Any => {
+                    if !result.exit_status.success() {
+                        has_matched = true;
+                    }
+                }
+                ErrorCode::Code(code) => {
                     if result.exit_status == ExitStatus::Exited(*code) {
                         has_matched = true;
                     }
@@ -162,17 +170,17 @@ fn main() {
 
         // --until-success
         if opt.until_success && result.exit_status.success() {
-                has_matched = true;
+            has_matched = true;
         }
 
         // --until-fail
         if opt.until_fail && !(result.exit_status.success()) {
-                has_matched = true;
+            has_matched = true;
         }
 
         if opt.summary {
             match result.exit_status {
-                ExitStatus::Exited(0)  =>  summary.successes += 1,
+                ExitStatus::Exited(0) => summary.successes += 1,
                 ExitStatus::Exited(n) => summary.failures.push(n),
                 _ => summary.failures.push(UNKONWN_EXIT_CODE),
             }
@@ -224,8 +232,11 @@ fn main() {
 }
 
 #[derive(StructOpt, Debug)]
-#[structopt(name = "loop", author = "Rich Jones <miserlou@gmail.com>",
-            about = "UNIX's missing `loop` command")]
+#[structopt(
+    name = "loop",
+    author = "Rich Jones <miserlou@gmail.com>",
+    about = "UNIX's missing `loop` command"
+)]
 struct Opt {
     /// Number of iterations to execute
     #[structopt(short = "n", long = "num")]
@@ -240,8 +251,12 @@ struct Opt {
     offset: f64,
 
     /// How often to iterate. ex., 5s, 1h1m1s1ms1us
-    #[structopt(short = "e", long = "every", default_value = "1us",
-                parse(try_from_str = "parse_duration"))]
+    #[structopt(
+        short = "e",
+        long = "every",
+        default_value = "1us",
+        parse(try_from_str = "parse_duration")
+    )]
     every: Duration,
 
     /// A comma-separated list of values, placed into 4ITEM. ex., red,green,blue
@@ -249,7 +264,11 @@ struct Opt {
     ffor: Option<Vec<String>>,
 
     /// Keep going until the duration has elapsed (example 1m30s)
-    #[structopt(short = "d", long = "for-duration", parse(try_from_str = "parse_duration"))]
+    #[structopt(
+        short = "d",
+        long = "for-duration",
+        parse(try_from_str = "parse_duration")
+    )]
     for_duration: Option<Duration>,
 
     /// Keep going until the output contains this string
@@ -269,7 +288,11 @@ struct Opt {
     until_match: Option<Regex>,
 
     /// Keep going until a future time, ex. "2018-04-20 04:20:00" (Times in UTC.)
-    #[structopt(short = "t", long = "until-time", parse(try_from_str = "parse_rfc3339_weak"))]
+    #[structopt(
+        short = "t",
+        long = "until-time",
+        parse(try_from_str = "parse_rfc3339_weak")
+    )]
     until_time: Option<SystemTime>,
 
     /// Keep going until the command exit status is non-zero, or the value given
@@ -301,9 +324,8 @@ struct Opt {
     summary: bool,
 
     /// The command to be looped
-    #[structopt(raw(multiple="true"))]
-    input: Vec<String>
-
+    #[structopt(raw(multiple = "true"))]
+    input: Vec<String>,
 }
 
 fn precision_of(s: &str) -> usize {
@@ -334,9 +356,9 @@ fn get_error_code(input: &&str) -> ErrorCode {
 }
 
 fn get_values(input: &&str) -> Vec<String> {
-    if input.contains('\n'){
+    if input.contains('\n') {
         input.split('\n').map(String::from).collect()
-    } else if input.contains(','){
+    } else if input.contains(',') {
         input.split(',').map(String::from).collect()
     } else {
         input.split(' ').map(String::from).collect()
@@ -353,7 +375,7 @@ struct Counter {
 #[derive(Debug)]
 struct Summary {
     successes: u32,
-    failures: Vec<u32>
+    failures: Vec<u32>,
 }
 
 impl Summary {
@@ -363,10 +385,15 @@ impl Summary {
         let errors = if self.failures.is_empty() {
             String::from("0")
         } else {
-            format!("{} ({})", self.failures.len(), self.failures.into_iter()
+            format!(
+                "{} ({})",
+                self.failures.len(),
+                self.failures
+                    .into_iter()
                     .map(|f| (-(f as i32)).to_string())
                     .collect::<Vec<String>>()
-                    .join(", "))
+                    .join(", ")
+            )
         };
 
         println!("Total runs:\t{}", total);
