@@ -38,11 +38,7 @@ fn main() {
     let program_start = Instant::now();
 
     // Number of iterations
-    let mut items = if let Some(items) = opt.ffor {
-        items.clone()
-    } else {
-        vec![]
-    };
+    let mut items: Vec<String> = opt.ffor.clone().unwrap_or_else(|| vec![]);
 
     // Get any lines from stdin
     if opt.stdin || atty::isnt(atty::Stream::Stdin) {
