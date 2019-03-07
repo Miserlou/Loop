@@ -49,7 +49,7 @@ fn main() {
     }
 
     let joined_input = &opt.input.join(" ");
-    if joined_input == "" {
+    if joined_input.is_empty() {
         println!("No command supplied, exiting.");
         return;
     }
