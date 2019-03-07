@@ -70,12 +70,7 @@ fn main() {
     };
     let mut previous_stdout = None;
 
-    let counter = Counter {
-        start: opt.offset - opt.count_by,
-        iters: 0.0,
-        end: num,
-        step_by: opt.count_by,
-    };
+    let counter = Counter::new_from_opt(&opt, num);
     for (count, actual_count) in counter.enumerate() {
         // Time Start
         let loop_start = Instant::now();
@@ -355,6 +350,30 @@ struct Counter {
     step_by: f64,
 }
 
+impl Counter {
+    fn new_from_opt(opt: &Opt, num: f64) -> Counter {
+        Counter {
+            start: opt.offset - opt.count_by,
+            iters: 0.0,
+            end: num,
+            step_by: opt.count_by,
+        }
+    }
+}
+
+impl Iterator for Counter {
+    type Item = f64;
+    fn next(&mut self) -> Option<Self::Item> {
+        self.start += self.step_by;
+        self.iters += 1.0;
+        if self.iters <= self.end {
+            Some(self.start)
+        } else {
+            None
+        }
+    }
+}
+
 #[derive(Debug)]
 struct Summary {
     successes: u32,
@@ -385,15 +404,11 @@ impl Summary {
     }
 }
 
-impl Iterator for Counter {
-    type Item = f64;
-    fn next(&mut self) -> Option<Self::Item> {
-        self.start += self.step_by;
-        self.iters += 1.0;
-        if self.iters <= self.end {
-            Some(self.start)
-        } else {
-            None
+impl Default for Summary {
+    fn default() -> Summary {
+        Summary {
+            successes: 0,
+            failures: Vec::new(),
         }
     }
 }
