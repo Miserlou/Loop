@@ -42,10 +42,10 @@ fn main() {
 
     // Get any lines from stdin
     if opt.stdin || atty::isnt(atty::Stream::Stdin) {
-        let stdin = io::stdin();
-        for line in stdin.lock().lines() {
-            items.push(line.unwrap().to_owned())
-        }
+        io::stdin()
+            .lock()
+            .lines()
+            .for_each(|line| items.push(line.unwrap().to_owned()));
     }
 
     let joined_input = &opt.input.join(" ");
