@@ -64,10 +64,7 @@ fn main() {
     };
     let mut has_matched = false;
     let mut tmpfile = tempfile::tempfile().unwrap();
-    let mut summary = Summary {
-        successes: 0,
-        failures: Vec::new(),
-    };
+    let mut summary = Summary::default();
     let mut previous_stdout = None;
 
     let counter = Counter::new_from_opt(&opt, num);
