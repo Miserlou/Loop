@@ -205,9 +205,7 @@ fn main() {
         let mut stdout = String::new();
         tmpfile.seek(SeekFrom::Start(0)).ok();
         tmpfile.read_to_string(&mut stdout).ok();
-        for line in stdout.lines() {
-            println!("{}", line);
-        }
+        stdout.lines().for_each(|line| println!("{}", line));
     }
 
     if opt.summary {
