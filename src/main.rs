@@ -117,18 +117,7 @@ fn main() {
         print_results(&opt, &mut stdout, &mut has_matched, &mut tmpfile);
 
         // --until-error
-        if let Some(error_code) = &opt.until_error {
-            match error_code {
-                ErrorCode::Any => {
-                    has_matched = !result.exit_status.success();
-                }
-                ErrorCode::Code(code) => {
-                    if result.exit_status == ExitStatus::Exited(*code) {
-                        has_matched = true;
-                    }
-                }
-            }
-        }
+        check_error_code(&opt.until_error, &mut has_matched, result.exit_status);
 
         // --until-success
         if opt.until_success && result.exit_status.success() {
@@ -210,6 +199,24 @@ fn print_results(opt: &Opt, stdout: &mut String, has_matched: &mut bool, tmpfile
             *has_matched = regex.captures(&line).is_some();
         }
     })
+}
+
+fn check_error_code(
+    maybe_error: &Option<ErrorCode>,
+    has_matched: &mut bool,
+    exit_status: subprocess::ExitStatus,
+) {
+    match maybe_error {
+        Some(ErrorCode::Any) => {
+            *has_matched = !exit_status.success();
+        }
+        Some(ErrorCode::Code(code)) => {
+            if exit_status == ExitStatus::Exited(*code) {
+                *has_matched = true;
+            }
+        }
+        _ => (),
+    }
 }
 
 #[derive(StructOpt, Debug)]
