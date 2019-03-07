@@ -3,7 +3,7 @@ name = "loop-rs"
 version = "0.6.1"
 authors = ["Rich Jones <miserlou@gmail.com>"]
 description = "UNIX's missing loop command"
-edition = "2015"
+edition = "2018"
 
 documentation = "https://github.com/Miserlou/Loop"
 homepage = "https://github.com/Miserlou/Loop"
