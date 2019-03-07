@@ -56,20 +56,13 @@ fn main() {
     }
 
     // Counters and State
-    let num = if let Some(num) = opt.num {
-        num
-    } else if !items.is_empty() {
-        items.len() as f64
-    } else {
-        f64::INFINITY
-    };
     let mut has_matched = false;
     let mut tmpfile = tempfile::tempfile().unwrap();
     let mut summary = Summary::default();
     let mut previous_stdout = None;
 
-    let counter = Counter::new_from_opt(&opt, num);
-    for (count, actual_count) in counter.enumerate() {
+    let counters = counters_from_opt(&opt, &items);
+    for (count, actual_count) in counters.iter().enumerate() {
         // Time Start
         let loop_start = Instant::now();
 
@@ -173,6 +166,30 @@ fn main() {
         summary.print()
     }
     process::exit(exit_status);
+}
+
+fn counters_from_opt(opt: &Opt, items: &[String]) -> Vec<f64> {
+    let mut counters = vec![];
+    let mut start = opt.offset - opt.count_by;
+    let mut index = 0_f64;
+    let step_by = opt.count_by;
+    let end = if let Some(num) = opt.num {
+        num
+    } else if !items.is_empty() {
+        items.len() as f64
+    } else {
+        f64::INFINITY
+    };
+    loop {
+        start += step_by;
+        index += 1_f64;
+        if index <= end {
+            counters.push(start)
+        } else {
+            break;
+        }
+    }
+    counters
 }
 
 fn print_results(opt: &Opt, has_matched: &mut bool, stdout: &str) {
@@ -359,37 +376,6 @@ fn get_values(input: &&str) -> Vec<String> {
         input.split(',').map(String::from).collect()
     } else {
         input.split(' ').map(String::from).collect()
-    }
-}
-
-struct Counter {
-    start: f64,
-    iters: f64,
-    end: f64,
-    step_by: f64,
-}
-
-impl Counter {
-    fn new_from_opt(opt: &Opt, num: f64) -> Counter {
-        Counter {
-            start: opt.offset - opt.count_by,
-            iters: 0.0,
-            end: num,
-            step_by: opt.count_by,
-        }
-    }
-}
-
-impl Iterator for Counter {
-    type Item = f64;
-    fn next(&mut self) -> Option<Self::Item> {
-        self.start += self.step_by;
-        self.iters += 1.0;
-        if self.iters <= self.end {
-            Some(self.start)
-        } else {
-            None
-        }
     }
 }
 
