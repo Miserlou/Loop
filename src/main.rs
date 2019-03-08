@@ -98,11 +98,7 @@ fn main() {
         }
 
         if opt.summary {
-            match result.exit_status {
-                ExitStatus::Exited(0) => state.summary.successes += 1,
-                ExitStatus::Exited(n) => state.summary.failures.push(n),
-                _ => state.summary.failures.push(UNKONWN_EXIT_CODE),
-            }
+            state.summary_exit_status(result.exit_status);
         }
 
         // Finish if we matched
@@ -120,9 +116,8 @@ fn main() {
             if opt.until_same && *previous_stdout == stdout {
                 break;
             }
-        } else {
-            state.previous_stdout = Some(stdout);
         }
+        state.previous_stdout = Some(stdout);
 
         // Delay until next iteration time
         let since = Instant::now().duration_since(loop_start);
@@ -403,6 +398,16 @@ struct State {
     summary: Summary,
     previous_stdout: Option<String>,
     exit_status: i32,
+}
+
+impl State {
+    fn summary_exit_status(&mut self, exit_status: subprocess::ExitStatus) {
+        match exit_status {
+            ExitStatus::Exited(0) => self.summary.successes += 1,
+            ExitStatus::Exited(n) => self.summary.failures.push(n),
+            _ => self.summary.failures.push(UNKONWN_EXIT_CODE),
+        }
+    }
 }
 
 impl Default for State {
