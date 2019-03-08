@@ -156,16 +156,7 @@ fn main() {
         }
     }
 
-    if opt.only_last {
-        String::from_temp_start(&mut tmpfile)
-            .lines()
-            .for_each(|line| println!("{}", line));
-    }
-
-    if opt.summary {
-        summary.print()
-    }
-    process::exit(exit_status);
+    exit_app(opt.only_last, opt.summary, exit_status, summary, tmpfile)
 }
 
 fn counters_from_opt(opt: &Opt, items: &[String]) -> Vec<f64> {
@@ -230,6 +221,26 @@ fn check_error_code(
         }
         _ => (),
     }
+}
+
+fn exit_app(
+    only_last: bool,
+    print_summary: bool,
+    exit_status: i32,
+    summary: Summary,
+    mut tmpfile: File,
+) {
+    if only_last {
+        String::from_temp_start(&mut tmpfile)
+            .lines()
+            .for_each(|line| println!("{}", line));
+    }
+
+    if print_summary {
+        summary.print()
+    }
+
+    process::exit(exit_status);
 }
 
 trait StringFromTempfileStart {
