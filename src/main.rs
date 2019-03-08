@@ -25,29 +25,8 @@ static UNKONWN_EXIT_CODE: u32 = 99;
 static TIMEOUT_EXIT_CODE: i32 = 124;
 
 fn main() {
-    // Load the CLI arguments
-    let opt = Opt::from_args();
-    let count_precision = Opt::clap()
-        .get_matches()
-        .value_of("count_by")
-        .map(precision_of)
-        .unwrap_or(0);
-
-    let mut exit_status = 0;
-
     // Time
-    let program_start = Instant::now();
-
-    // Number of iterations
-    let mut items: Vec<String> = opt.ffor.clone().unwrap_or_else(|| vec![]);
-
-    // Get any lines from stdin
-    if opt.stdin || atty::isnt(atty::Stream::Stdin) {
-        io::stdin()
-            .lock()
-            .lines()
-            .for_each(|line| items.push(line.unwrap().to_owned()));
-    }
+    let (opt, items, count_precision, program_start) = setup();
 
     let joined_input = &opt.input.join(" ");
     if joined_input.is_empty() {
@@ -56,11 +35,7 @@ fn main() {
     }
 
     // Counters and State
-    let mut has_matched = false;
-    let mut tmpfile = tempfile::tempfile().unwrap();
-    let mut summary = Summary::default();
-    let mut previous_stdout = None;
-
+    let mut state = State::default();
     let counters = counters_from_opt(&opt, &items);
     for (count, actual_count) in counters.iter().enumerate() {
         // Time Start
@@ -81,7 +56,7 @@ fn main() {
             let since = Instant::now().duration_since(program_start);
             if since >= duration {
                 if opt.error_duration {
-                    exit_status = TIMEOUT_EXIT_CODE
+                    state.exit_status = TIMEOUT_EXIT_CODE
                 }
                 break;
             }
@@ -97,45 +72,45 @@ fn main() {
         }
 
         // Main executor
-        tmpfile.seek(SeekFrom::Start(0)).ok();
-        tmpfile.set_len(0).ok();
+        state.tmpfile.seek(SeekFrom::Start(0)).ok();
+        state.tmpfile.set_len(0).ok();
         let result = Exec::shell(joined_input)
-            .stdout(Redirection::File(tmpfile.try_clone().unwrap()))
+            .stdout(Redirection::File(state.tmpfile.try_clone().unwrap()))
             .stderr(Redirection::Merge)
             .capture()
             .unwrap();
 
         // Print the results
-        let stdout = String::from_temp_start(&mut tmpfile);
-        print_results(&opt, &mut has_matched, &stdout);
+        let stdout = String::from_temp_start(&mut state.tmpfile);
+        print_results(&opt, &mut state.has_matched, &stdout);
 
         // --until-error
-        check_error_code(&opt.until_error, &mut has_matched, result.exit_status);
+        check_error_code(&opt.until_error, &mut state.has_matched, result.exit_status);
 
         // --until-success
         if opt.until_success && result.exit_status.success() {
-            has_matched = true;
+            state.has_matched = true;
         }
 
         // --until-fail
         if opt.until_fail && !(result.exit_status.success()) {
-            has_matched = true;
+            state.has_matched = true;
         }
 
         if opt.summary {
             match result.exit_status {
-                ExitStatus::Exited(0) => summary.successes += 1,
-                ExitStatus::Exited(n) => summary.failures.push(n),
-                _ => summary.failures.push(UNKONWN_EXIT_CODE),
+                ExitStatus::Exited(0) => state.summary.successes += 1,
+                ExitStatus::Exited(n) => state.summary.failures.push(n),
+                _ => state.summary.failures.push(UNKONWN_EXIT_CODE),
             }
         }
 
         // Finish if we matched
-        if has_matched {
+        if state.has_matched {
             break;
         }
 
-        if let Some(ref previous_stdout) = previous_stdout {
+        if let Some(ref previous_stdout) = state.previous_stdout {
             // --until-changes
             if opt.until_changes && *previous_stdout != stdout {
                 break;
@@ -146,7 +121,7 @@ fn main() {
                 break;
             }
         } else {
-            previous_stdout = Some(stdout);
+            state.previous_stdout = Some(stdout);
         }
 
         // Delay until next iteration time
@@ -156,7 +131,39 @@ fn main() {
         }
     }
 
-    exit_app(opt.only_last, opt.summary, exit_status, summary, tmpfile)
+    exit_app(
+        opt.only_last,
+        opt.summary,
+        state.exit_status,
+        state.summary,
+        state.tmpfile,
+    )
+}
+
+fn setup() -> (Opt, Vec<String>, usize, Instant) {
+    // Time
+    let program_start = Instant::now();
+
+    // Load the CLI arguments
+    let opt = Opt::from_args();
+    let count_precision = Opt::clap()
+        .get_matches()
+        .value_of("count_by")
+        .map(precision_of)
+        .unwrap_or(0);
+
+    // Number of iterations
+    let mut items: Vec<String> = opt.ffor.clone().unwrap_or_else(|| vec![]);
+
+    // Get any lines from stdin
+    if opt.stdin || atty::isnt(atty::Stream::Stdin) {
+        io::stdin()
+            .lock()
+            .lines()
+            .for_each(|line| items.push(line.unwrap().to_owned()));
+    }
+
+    (opt, items, count_precision, program_start)
 }
 
 fn counters_from_opt(opt: &Opt, items: &[String]) -> Vec<f64> {
@@ -387,6 +394,26 @@ fn get_values(input: &&str) -> Vec<String> {
         input.split(',').map(String::from).collect()
     } else {
         input.split(' ').map(String::from).collect()
+    }
+}
+
+struct State {
+    has_matched: bool,
+    tmpfile: File,
+    summary: Summary,
+    previous_stdout: Option<String>,
+    exit_status: i32,
+}
+
+impl Default for State {
+    fn default() -> State {
+        State {
+            has_matched: false,
+            tmpfile: tempfile::tempfile().unwrap(),
+            summary: Summary::default(),
+            previous_stdout: None,
+            exit_status: 0,
+        }
     }
 }
 
