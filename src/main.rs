@@ -82,7 +82,7 @@ fn main() {
 
         // Print the results
         let stdout = String::from_temp_start(&mut state.tmpfile);
-        print_results(&opt, &mut state.has_matched, &stdout);
+        state.print_results(&opt, &stdout);
 
         // --until-error
         check_error_code(&opt.until_error, &mut state.has_matched, result.exit_status);
@@ -183,28 +183,6 @@ fn counters_from_opt(opt: &Opt, items: &[String]) -> Vec<f64> {
         }
     }
     counters
-}
-
-fn print_results(opt: &Opt, has_matched: &mut bool, stdout: &str) {
-    stdout.lines().for_each(|line| {
-        // --only-last
-        // If we only want output from the last execution,
-        // defer printing until later
-        if !opt.only_last {
-            println!("{}", line);
-        }
-
-        // --until-contains
-        // We defer loop breaking until the entire result is printed.
-        if let Some(ref string) = opt.until_contains {
-            *has_matched = line.contains(string);
-        }
-
-        // --until-match
-        if let Some(ref regex) = opt.until_match {
-            *has_matched = regex.captures(&line).is_some();
-        }
-    })
 }
 
 fn check_error_code(
@@ -407,6 +385,28 @@ impl State {
             ExitStatus::Exited(n) => self.summary.failures.push(n),
             _ => self.summary.failures.push(UNKONWN_EXIT_CODE),
         }
+    }
+
+    fn print_results(&mut self, opt: &Opt, stdout: &str) {
+        stdout.lines().for_each(|line| {
+            // --only-last
+            // If we only want output from the last execution,
+            // defer printing until later
+            if !opt.only_last {
+                println!("{}", line);
+            }
+
+            // --until-contains
+            // We defer loop breaking until the entire result is printed.
+            if let Some(ref string) = opt.until_contains {
+                self.has_matched = line.contains(string);
+            }
+
+            // --until-match
+            if let Some(ref regex) = opt.until_match {
+                self.has_matched = regex.captures(&line).is_some();
+            }
+        })
     }
 }
 
