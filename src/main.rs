@@ -72,33 +72,27 @@ fn main() {
         }
 
         // Main executor
-        state.tmpfile.seek(SeekFrom::Start(0)).ok();
-        state.tmpfile.set_len(0).ok();
-        let result = Exec::shell(joined_input)
-            .stdout(Redirection::File(state.tmpfile.try_clone().unwrap()))
-            .stderr(Redirection::Merge)
-            .capture()
-            .unwrap();
+        let exit_status = state.run_shell_command(joined_input);
 
         // Print the results
         let stdout = String::from_temp_start(&mut state.tmpfile);
         state.print_results(&opt, &stdout);
 
         // --until-error
-        check_error_code(&opt.until_error, &mut state.has_matched, result.exit_status);
+        check_error_code(&opt.until_error, &mut state.has_matched, exit_status);
 
         // --until-success
-        if opt.until_success && result.exit_status.success() {
+        if opt.until_success && exit_status.success() {
             state.has_matched = true;
         }
 
         // --until-fail
-        if opt.until_fail && !(result.exit_status.success()) {
+        if opt.until_fail && !(exit_status.success()) {
             state.has_matched = true;
         }
 
         if opt.summary {
-            state.summary_exit_status(result.exit_status);
+            state.summary_exit_status(exit_status);
         }
 
         // Finish if we matched
@@ -385,6 +379,17 @@ impl State {
             ExitStatus::Exited(n) => self.summary.failures.push(n),
             _ => self.summary.failures.push(UNKONWN_EXIT_CODE),
         }
+    }
+
+    fn run_shell_command(&mut self, joined_input: &str) -> ExitStatus {
+        self.tmpfile.seek(SeekFrom::Start(0)).ok();
+        self.tmpfile.set_len(0).ok();
+        Exec::shell(joined_input)
+            .stdout(Redirection::File(self.tmpfile.try_clone().unwrap()))
+            .stderr(Redirection::Merge)
+            .capture()
+            .unwrap()
+            .exit_status
     }
 
     fn print_results(&mut self, opt: &Opt, stdout: &str) {
