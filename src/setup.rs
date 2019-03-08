@@ -1,6 +1,7 @@
-use humantime::{parse_duration, parse_rfc3339_weak};
 use regex::Regex;
 use std::time::{Duration, Instant, SystemTime};
+
+use humantime::{parse_duration, parse_rfc3339_weak};
 use structopt::StructOpt;
 
 pub fn setup() -> (Opt, Vec<String>, usize, Instant) {
