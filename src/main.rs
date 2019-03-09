@@ -1,7 +1,9 @@
+mod loop_step;
 mod setup;
 mod state;
 mod util;
 
+use loop_step::loop_step;
 use setup::{setup, Opt};
 use state::{Counters, State, Summary};
 
@@ -26,7 +28,14 @@ fn main() {
             index: i,
             actual_count: *actual_count,
         };
-        if state.loop_body(&opt, &items, cmd_with_args, counters, program_start) {
+        if loop_step(
+            &mut state,
+            &opt,
+            &items,
+            cmd_with_args,
+            counters,
+            program_start,
+        ) {
             break;
         }
     }
