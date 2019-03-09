@@ -47,13 +47,9 @@ fn main() {
         }
     }
 
-    exit_app(
-        opt.only_last,
-        opt.summary,
-        state.exit_status,
-        state.summary,
-        state.tmpfile,
-    )
+    pre_exit_tasks(opt.only_last, opt.summary, state.summary, state.tmpfile);
+
+    process::exit(state.exit_status);
 }
 
 fn counters_from_opt(opt: &Opt, items: &[String]) -> Vec<f64> {
@@ -80,13 +76,7 @@ fn counters_from_opt(opt: &Opt, items: &[String]) -> Vec<f64> {
     counters
 }
 
-fn exit_app(
-    only_last: bool,
-    print_summary: bool,
-    exit_status: i32,
-    summary: Summary,
-    mut tmpfile: File,
-) {
+fn pre_exit_tasks(only_last: bool, print_summary: bool, summary: Summary, mut tmpfile: File) {
     use util::StringFromTempfileStart;
 
     if only_last {
@@ -98,8 +88,6 @@ fn exit_app(
     if print_summary {
         summary.print()
     }
-
-    process::exit(exit_status);
 }
 
 struct RealEnv {}
