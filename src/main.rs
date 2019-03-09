@@ -3,12 +3,14 @@ mod setup;
 mod state;
 mod util;
 
-use loop_step::{loop_step, Env};
+use loop_step::{loop_step, Env, ShellCommand};
 use setup::{setup, Opt};
 use state::{Counters, State, Summary};
 
 use std::fs::File;
 use std::process;
+
+use subprocess::{Exec, ExitStatus, Redirection};
 
 fn main() {
     // Time
@@ -23,6 +25,7 @@ fn main() {
     // Counters and State
     let mut state = State::default();
     let env: &Env = &RealEnv {};
+    let shell_command: &ShellCommand = &RealShellCommand {};
 
     for (i, actual_count) in counters_from_opt(&opt, &items).iter().enumerate() {
         let counters = Counters {
@@ -38,6 +41,7 @@ fn main() {
             counters,
             program_start,
             env,
+            shell_command,
         ) {
             break;
         }
@@ -103,5 +107,23 @@ struct RealEnv {}
 impl Env for RealEnv {
     fn set_var(&self, k: &str, v: &str) {
         std::env::set_var(k, v);
+    }
+}
+
+struct RealShellCommand {}
+
+impl ShellCommand for RealShellCommand {
+    fn run(&self, state: &mut State, cmd_with_args: &str) -> ExitStatus {
+        use std::io::{prelude::*, SeekFrom};
+
+        state.tmpfile.seek(SeekFrom::Start(0)).ok();
+        state.tmpfile.set_len(0).ok();
+
+        Exec::shell(cmd_with_args)
+            .stdout(Redirection::File(state.tmpfile.try_clone().unwrap()))
+            .stderr(Redirection::Merge)
+            .capture()
+            .unwrap()
+            .exit_status
     }
 }

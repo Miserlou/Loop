@@ -4,7 +4,7 @@ use crate::util::StringFromTempfileStart;
 
 use std::time::{Instant, SystemTime};
 
-use subprocess::{Exec, ExitStatus, Redirection};
+use subprocess::ExitStatus;
 
 // same exit-code as used by the `timeout` shell command
 static TIMEOUT_EXIT_CODE: i32 = 124;
@@ -17,6 +17,7 @@ pub fn loop_step(
     counters: Counters,
     program_start: Instant,
     env: &Env,
+    shell_command: &ShellCommand,
 ) -> bool {
     use std::thread;
 
@@ -57,7 +58,7 @@ pub fn loop_step(
     }
 
     // Main executor
-    let exit_status = run_shell_command(state, cmd_with_args);
+    let exit_status = shell_command.run(state, cmd_with_args);
 
     // Print the results
     let stdout = String::from_temp_start(&mut state.tmpfile);
@@ -107,20 +108,6 @@ pub fn loop_step(
     false
 }
 
-fn run_shell_command(state: &mut State, cmd_with_args: &str) -> ExitStatus {
-    use std::io::{prelude::*, SeekFrom};
-
-    state.tmpfile.seek(SeekFrom::Start(0)).ok();
-    state.tmpfile.set_len(0).ok();
-
-    Exec::shell(cmd_with_args)
-        .stdout(Redirection::File(state.tmpfile.try_clone().unwrap()))
-        .stderr(Redirection::Merge)
-        .capture()
-        .unwrap()
-        .exit_status
-}
-
 fn check_for_error(
     maybe_error: &Option<ErrorCode>,
     has_matched: &mut bool,
@@ -141,4 +128,8 @@ fn check_for_error(
 
 pub trait Env {
     fn set_var(&self, k: &str, v: &str);
+}
+
+pub trait ShellCommand {
+    fn run(&self, state: &mut State, cmd_with_args: &str) -> ExitStatus;
 }
