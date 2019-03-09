@@ -16,8 +16,8 @@ pub fn loop_step(
     cmd_with_args: &str,
     counters: Counters,
     program_start: Instant,
+    env: &Env,
 ) -> bool {
-    use std::env;
     use std::thread;
 
     // Time Start
@@ -25,15 +25,15 @@ pub fn loop_step(
 
     // Set counters before execution
     // THESE ARE FLIPPED AND I CAN'T UNFLIP THEM.
-    env::set_var("ACTUALCOUNT", counters.index.to_string());
-    env::set_var(
+    env.set_var("ACTUALCOUNT", &counters.index.to_string());
+    env.set_var(
         "COUNT",
-        format!("{:.*}", counters.count_precision, counters.actual_count),
+        &format!("{:.*}", counters.count_precision, counters.actual_count),
     );
 
     // Set iterated item as environment variable
     if let Some(item) = items.get(counters.index) {
-        env::set_var("ITEM", item);
+        env.set_var("ITEM", item);
     }
 
     // Finish if we're over our duration
@@ -137,4 +137,8 @@ fn check_for_error(
         }
         _ => (),
     }
+}
+
+pub trait Env {
+    fn set_var(&self, k: &str, v: &str);
 }

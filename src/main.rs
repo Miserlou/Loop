@@ -3,7 +3,7 @@ mod setup;
 mod state;
 mod util;
 
-use loop_step::loop_step;
+use loop_step::{loop_step, Env};
 use setup::{setup, Opt};
 use state::{Counters, State, Summary};
 
@@ -22,6 +22,8 @@ fn main() {
 
     // Counters and State
     let mut state = State::default();
+    let env: &Env = &RealEnv {};
+
     for (i, actual_count) in counters_from_opt(&opt, &items).iter().enumerate() {
         let counters = Counters {
             count_precision,
@@ -35,6 +37,7 @@ fn main() {
             cmd_with_args,
             counters,
             program_start,
+            env,
         ) {
             break;
         }
@@ -93,4 +96,12 @@ fn exit_app(
     }
 
     process::exit(exit_status);
+}
+
+struct RealEnv {}
+
+impl Env for RealEnv {
+    fn set_var(&self, k: &str, v: &str) {
+        std::env::set_var(k, v);
+    }
 }
