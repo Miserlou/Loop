@@ -5,19 +5,17 @@ mod setup;
 mod state;
 mod util;
 
-static EXIT_CODE_MINOR_ERROR: i32 = 2;
-
 fn main() {
     use io::pre_exit_tasks;
     use setup::setup;
-    use state::{Counters, State};
+    use state::{Counters, ExitCode, State};
     use std::process;
 
     let m = setup();
 
     if m.is_no_command_supplied {
         eprintln!("No command supplied, exiting.");
-        process::exit(EXIT_CODE_MINOR_ERROR);
+        process::exit(ExitCode::MinorError.into());
     }
 
     let mut state = State::default();
@@ -42,5 +40,5 @@ fn main() {
 
     pre_exit_tasks(m.opt_only_last, m.opt_summary, state.summary, state.tmpfile);
 
-    process::exit(state.exit_status);
+    process::exit(state.exit_code.into());
 }

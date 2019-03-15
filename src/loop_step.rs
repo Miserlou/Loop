@@ -1,13 +1,10 @@
 use crate::setup::ErrorCode;
-use crate::state::{Counters, State};
+use crate::state::{Counters, ExitCode, State};
 use crate::util::StringFromTempfileStart;
 
 use std::time::{Duration, Instant, SystemTime};
 
 use subprocess::ExitStatus;
-
-/// same exit-code as used by the `timeout` shell command
-static EXIT_CODE_TIMEOUT: i32 = 124;
 
 pub struct LoopModel {
     pub for_duration: Option<Duration>,
@@ -59,7 +56,7 @@ impl LoopModel {
             let since = Instant::now().duration_since(self.program_start);
             if since >= duration {
                 if self.error_duration {
-                    state.exit_status = EXIT_CODE_TIMEOUT
+                    state.exit_code = ExitCode::Timeout;
                 }
                 return (true, state);
             }
