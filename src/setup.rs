@@ -43,7 +43,7 @@ fn precision_of(s: &str) -> usize {
     exp - after_point
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone, Copy)]
 pub enum ErrorCode {
     Any,
     Code(u32),

@@ -1,5 +1,3 @@
-use crate::setup::Opt;
-
 use std::fs::File;
 
 use subprocess::ExitStatus;
@@ -27,28 +25,6 @@ impl State {
             ExitStatus::Exited(n) => self.summary.failures.push(n),
             _ => self.summary.failures.push(UNKONWN_EXIT_CODE),
         }
-    }
-
-    pub fn print_results(&mut self, opt: &Opt, stdout: &str) {
-        stdout.lines().for_each(|line| {
-            // --only-last
-            // If we only want output from the last execution,
-            // defer printing until later
-            if !opt.only_last {
-                println!("{}", line);
-            }
-
-            // --until-contains
-            // We defer loop breaking until the entire result is printed.
-            if let Some(ref string) = opt.until_contains {
-                self.has_matched = line.contains(string);
-            }
-
-            // --until-match
-            if let Some(ref regex) = opt.until_match {
-                self.has_matched = regex.captures(&line).is_some();
-            }
-        })
     }
 }
 
