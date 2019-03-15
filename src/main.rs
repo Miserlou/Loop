@@ -5,49 +5,32 @@ mod setup;
 mod state;
 mod util;
 
-use io::{pre_exit_tasks, RealEnv, RealResultPrinter, RealShellCommand};
-use loop_iterator::LoopIterator;
-use setup::setup;
-use state::{Counters, State};
-
-use std::process;
-
 fn main() {
-    // Time
-    let (opt, items, count_precision, program_start) = setup();
+    use io::pre_exit_tasks;
+    use setup::setup;
+    use state::{Counters, State};
+    use std::process;
 
-    let opt_only_last = opt.only_last;
-    let opt_summary = opt.summary;
+    let m = setup();
 
-    let cmd_with_args = opt.input.join(" ");
-    if cmd_with_args.is_empty() {
+    if m.is_no_command_supplied {
         println!("No command supplied, exiting.");
         return;
     }
 
-    // Counters and State
-    let env = RealEnv {};
-    let shell_command = RealShellCommand {};
-    let result_printer = RealResultPrinter::new(
-        opt.only_last,
-        opt.until_contains.clone(),
-        opt.until_match.clone(),
-    );
-
-    let iterator = LoopIterator::new(opt.offset, opt.count_by, opt.num, &items);
-    let loop_model = opt.into_loop_model(cmd_with_args, program_start, items);
-
     let mut state = State::default();
+    let loop_model = m.loop_model;
 
-    for (index, actual_count) in iterator.enumerate() {
+    for (index, actual_count) in m.iterator.enumerate() {
         let counters = Counters {
-            count_precision,
+            count_precision: m.count_precision,
             index,
             actual_count,
         };
 
         let (break_loop, new_state) =
-            loop_model.step(state, counters, &env, &shell_command, &result_printer);
+            loop_model.step(state, counters, &m.env, &m.shell_command, &m.result_printer);
+
         state = new_state;
 
         if break_loop {
@@ -55,7 +38,7 @@ fn main() {
         }
     }
 
-    pre_exit_tasks(opt_only_last, opt_summary, state.summary, state.tmpfile);
+    pre_exit_tasks(m.opt_only_last, m.opt_summary, state.summary, state.tmpfile);
 
     process::exit(state.exit_status);
 }

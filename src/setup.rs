@@ -1,12 +1,28 @@
+use crate::io::{RealEnv, RealResultPrinter, RealShellCommand};
+use crate::loop_iterator::LoopIterator;
 use crate::loop_step::LoopModel;
 
-use regex::Regex;
 use std::time::{Duration, Instant, SystemTime};
 
 use humantime::{parse_duration, parse_rfc3339_weak};
+use regex::Regex;
 use structopt::StructOpt;
 
-pub fn setup() -> (Opt, Vec<String>, usize, Instant) {
+pub struct Setup {
+    pub count_precision: usize,
+    pub is_no_command_supplied: bool,
+    pub opt_only_last: bool,
+    pub opt_summary: bool,
+
+    pub env: RealEnv,
+    pub shell_command: RealShellCommand,
+    pub result_printer: RealResultPrinter,
+
+    pub iterator: LoopIterator,
+    pub loop_model: LoopModel,
+}
+
+pub fn setup() -> Setup {
     use std::io::{self, BufRead};
 
     // Time
@@ -14,11 +30,25 @@ pub fn setup() -> (Opt, Vec<String>, usize, Instant) {
 
     // Load the CLI arguments
     let opt = Opt::from_args();
+
     let count_precision = Opt::clap()
         .get_matches()
         .value_of("count_by")
         .map(precision_of)
         .unwrap_or(0);
+
+    let cmd_with_args = opt.input.join(" ");
+    let is_no_command_supplied = cmd_with_args.is_empty();
+    let opt_only_last = opt.only_last;
+    let opt_summary = opt.summary;
+
+    let env = RealEnv {};
+    let shell_command = RealShellCommand {};
+    let result_printer = RealResultPrinter::new(
+        opt.only_last,
+        opt.until_contains.clone(),
+        opt.until_match.clone(),
+    );
 
     // Number of iterations
     let mut items: Vec<String> = opt.ffor.clone().unwrap_or_else(|| vec![]);
@@ -32,7 +62,22 @@ pub fn setup() -> (Opt, Vec<String>, usize, Instant) {
             .for_each(|line| items.push(line));
     }
 
-    (opt, items, count_precision, program_start)
+    let iterator = LoopIterator::new(opt.offset, opt.count_by, opt.num, &items);
+    let loop_model = opt.into_loop_model(cmd_with_args, program_start, items);
+
+    Setup {
+        count_precision,
+        is_no_command_supplied,
+        opt_only_last,
+        opt_summary,
+
+        env,
+        shell_command,
+        result_printer,
+
+        iterator,
+        loop_model,
+    }
 }
 
 fn precision_of(s: &str) -> usize {
@@ -74,18 +119,18 @@ fn get_values(input: &str) -> Vec<String> {
     author = "Rich Jones <miserlou@gmail.com>",
     about = "UNIX's missing `loop` command"
 )]
-pub struct Opt {
+struct Opt {
     /// Number of iterations to execute
     #[structopt(short = "n", long = "num")]
-    pub num: Option<f64>,
+    num: Option<f64>,
 
     /// Amount to increment the counter by
     #[structopt(short = "b", long = "count-by", default_value = "1")]
-    pub count_by: f64,
+    count_by: f64,
 
     /// Amount to offset the initial counter by
     #[structopt(short = "o", long = "offset", default_value = "0")]
-    pub offset: f64,
+    offset: f64,
 
     /// How often to iterate. ex., 5s, 1h1m1s1ms1us
     #[structopt(
@@ -94,11 +139,11 @@ pub struct Opt {
         default_value = "1us",
         parse(try_from_str = "parse_duration")
     )]
-    pub every: Duration,
+    every: Duration,
 
     /// A comma-separated list of values, placed into 4ITEM. ex., red,green,blue
     #[structopt(long = "for", parse(from_str = "get_values"))]
-    pub ffor: Option<Vec<String>>,
+    ffor: Option<Vec<String>>,
 
     /// Keep going until the duration has elapsed (example 1m30s)
     #[structopt(
@@ -106,23 +151,23 @@ pub struct Opt {
         long = "for-duration",
         parse(try_from_str = "parse_duration")
     )]
-    pub for_duration: Option<Duration>,
+    for_duration: Option<Duration>,
 
     /// Keep going until the output contains this string
     #[structopt(short = "c", long = "until-contains")]
-    pub until_contains: Option<String>,
+    until_contains: Option<String>,
 
     /// Keep going until the output changes
     #[structopt(short = "C", long = "until-changes")]
-    pub until_changes: bool,
+    until_changes: bool,
 
     /// Keep going until the output changes
     #[structopt(short = "S", long = "until-same")]
-    pub until_same: bool,
+    until_same: bool,
 
     /// Keep going until the output matches this regular expression
     #[structopt(short = "m", long = "until-match", parse(try_from_str = "Regex::new"))]
-    pub until_match: Option<Regex>,
+    until_match: Option<Regex>,
 
     /// Keep going until a future time, ex. "2018-04-20 04:20:00" (Times in UTC.)
     #[structopt(
@@ -130,43 +175,43 @@ pub struct Opt {
         long = "until-time",
         parse(try_from_str = "parse_rfc3339_weak")
     )]
-    pub until_time: Option<SystemTime>,
+    until_time: Option<SystemTime>,
 
     /// Keep going until the command exit status is non-zero, or the value given
     #[structopt(short = "r", long = "until-error", parse(from_str = "get_error_code"))]
-    pub until_error: Option<ErrorCode>,
+    until_error: Option<ErrorCode>,
 
     /// Keep going until the command exit status is zero
     #[structopt(short = "s", long = "until-success")]
-    pub until_success: bool,
+    until_success: bool,
 
     /// Keep going until the command exit status is non-zero
     #[structopt(short = "f", long = "until-fail")]
-    pub until_fail: bool,
+    until_fail: bool,
 
     /// Only print the output of the last execution of the command
     #[structopt(short = "l", long = "only-last")]
-    pub only_last: bool,
+    only_last: bool,
 
     /// Read from standard input
     #[structopt(short = "i", long = "stdin")]
-    pub stdin: bool,
+    stdin: bool,
 
     /// Exit with timeout error code on duration
     #[structopt(short = "D", long = "error-duration")]
-    pub error_duration: bool,
+    error_duration: bool,
 
     /// Provide a summary
     #[structopt(long = "summary")]
-    pub summary: bool,
+    summary: bool,
 
     /// The command to be looped
     #[structopt(raw(multiple = "true"))]
-    pub input: Vec<String>,
+    input: Vec<String>,
 }
 
 impl Opt {
-    pub fn into_loop_model(
+    fn into_loop_model(
         self,
         cmd_with_args: String,
         program_start: Instant,
