@@ -47,7 +47,8 @@ fn main() {
             actual_count: *actual_count,
         };
 
-        let break_loop = loop_model.step(&mut state, counters);
+        let (break_loop, new_state) = loop_model.step(state, counters);
+        state = new_state;
 
         if break_loop {
             break;
@@ -94,18 +95,20 @@ impl Env for RealEnv {
 struct RealShellCommand {}
 
 impl ShellCommand for RealShellCommand {
-    fn run(&self, state: &mut State, cmd_with_args: &str) -> ExitStatus {
+    fn run(&self, mut state: State, cmd_with_args: &str) -> (ExitStatus, State) {
         use std::io::{prelude::*, SeekFrom};
 
         state.tmpfile.seek(SeekFrom::Start(0)).ok();
         state.tmpfile.set_len(0).ok();
 
-        Exec::shell(cmd_with_args)
+        let status = Exec::shell(cmd_with_args)
             .stdout(Redirection::File(state.tmpfile.try_clone().unwrap()))
             .stderr(Redirection::Merge)
             .capture()
             .unwrap()
-            .exit_status
+            .exit_status;
+
+        (status, state)
     }
 }
 
@@ -114,7 +117,7 @@ struct RealResultPrinter<'a> {
 }
 
 impl<'a> ResultPrinter for RealResultPrinter<'a> {
-    fn print_and_mutate(&self, state: &mut State, stdout: &str) {
+    fn print_and_mutate(&self, mut state: State, stdout: &str) -> State {
         stdout.lines().for_each(|line| {
             // --only-last
             // If we only want output from the last execution,
@@ -133,7 +136,9 @@ impl<'a> ResultPrinter for RealResultPrinter<'a> {
             if let Some(ref regex) = self.opt.until_match {
                 state.has_matched = regex.captures(&line).is_some();
             }
-        })
+        });
+
+        state
     }
 }
 

@@ -31,7 +31,8 @@ pub struct LoopModel<'a> {
 }
 
 impl<'a> LoopModel<'a> {
-    pub fn step(&self, state: &mut State, counters: Counters) -> bool {
+    #[must_use]
+    pub fn step(&self, mut state: State, counters: Counters) -> (bool, State) {
         use std::thread;
 
         // Time Start
@@ -61,7 +62,7 @@ impl<'a> LoopModel<'a> {
                 if self.error_duration {
                     state.exit_status = TIMEOUT_EXIT_CODE
                 }
-                return true;
+                return (true, state);
             }
         }
 
@@ -70,16 +71,17 @@ impl<'a> LoopModel<'a> {
         // even if the start time is beyond the until time.
         if let Some(until_time) = self.until_time {
             if SystemTime::now().duration_since(until_time).is_ok() {
-                return true;
+                return (true, state);
             }
         }
 
         // Main executor
-        let exit_status = shell_command.run(state, &self.cmd_with_args);
+        let (exit_status, new_state) = shell_command.run(state, &self.cmd_with_args);
+        state = new_state;
 
         // Print the results
         let stdout = String::from_temp_start(&mut state.tmpfile);
-        result_printer.print_and_mutate(state, &stdout);
+        state = result_printer.print_and_mutate(state, &stdout);
 
         // --until-error
         check_for_error(self.until_error, &mut state.has_matched, exit_status);
@@ -100,18 +102,18 @@ impl<'a> LoopModel<'a> {
 
         // Finish if we matched
         if state.has_matched {
-            return true;
+            return (true, state);
         }
 
         if let Some(ref previous_stdout) = state.previous_stdout {
             // --until-changes
             if self.until_changes && *previous_stdout != stdout {
-                return true;
+                return (true, state);
             }
 
             // --until-same
             if self.until_same && *previous_stdout == stdout {
-                return true;
+                return (true, state);
             }
         }
         state.previous_stdout = Some(stdout);
@@ -122,7 +124,7 @@ impl<'a> LoopModel<'a> {
             thread::sleep(time);
         }
 
-        false
+        (false, state)
     }
 }
 
@@ -149,9 +151,11 @@ pub trait Env {
 }
 
 pub trait ShellCommand {
-    fn run(&self, state: &mut State, cmd_with_args: &str) -> ExitStatus;
+    #[must_use]
+    fn run(&self, state: State, cmd_with_args: &str) -> (ExitStatus, State);
 }
 
 pub trait ResultPrinter {
-    fn print_and_mutate(&self, state: &mut State, stdout: &str);
+    #[must_use]
+    fn print_and_mutate(&self, state: State, stdout: &str) -> State;
 }
