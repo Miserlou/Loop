@@ -17,6 +17,9 @@ fn main() {
     // Time
     let (opt, items, count_precision, program_start) = setup();
 
+    let opt_only_last = opt.only_last;
+    let opt_summary = opt.summary;
+
     let cmd_with_args = opt.input.join(" ");
     if cmd_with_args.is_empty() {
         println!("No command supplied, exiting.");
@@ -24,12 +27,12 @@ fn main() {
     }
 
     // Counters and State
-    let mut state = State::default();
     let env: &dyn Env = &RealEnv {};
     let shell_command: &dyn ShellCommand = &RealShellCommand {};
     let result_printer: &dyn ResultPrinter = &RealResultPrinter { opt: &opt };
 
-    let data_vec = counters_from_opt(&opt, &items);
+    let iterator = LoopIterator::new(opt.offset, opt.count_by, opt.num, &items);
+
     let loop_model = create_loop_model(
         &opt,
         cmd_with_args,
@@ -40,11 +43,13 @@ fn main() {
         result_printer,
     );
 
-    for (i, actual_count) in data_vec.iter().enumerate() {
+    let mut state = State::default();
+
+    for (index, actual_count) in iterator.enumerate() {
         let counters = Counters {
             count_precision,
-            index: i,
-            actual_count: *actual_count,
+            index,
+            actual_count,
         };
 
         let (break_loop, new_state) = loop_model.step(state, counters);
@@ -55,33 +60,9 @@ fn main() {
         }
     }
 
-    pre_exit_tasks(opt.only_last, opt.summary, state.summary, state.tmpfile);
+    pre_exit_tasks(opt_only_last, opt_summary, state.summary, state.tmpfile);
 
     process::exit(state.exit_status);
-}
-
-fn counters_from_opt(opt: &Opt, items: &[String]) -> Vec<f64> {
-    let mut counters = vec![];
-    let mut start = opt.offset - opt.count_by;
-    let mut index = 0_f64;
-    let step_by = opt.count_by;
-    let end = if let Some(num) = opt.num {
-        num
-    } else if !items.is_empty() {
-        items.len() as f64
-    } else {
-        std::f64::INFINITY
-    };
-    loop {
-        start += step_by;
-        index += 1_f64;
-        if index <= end {
-            counters.push(start)
-        } else {
-            break;
-        }
-    }
-    counters
 }
 
 struct RealEnv {}
@@ -182,5 +163,44 @@ fn pre_exit_tasks(only_last: bool, print_summary: bool, summary: Summary, mut tm
 
     if print_summary {
         summary.print()
+    }
+}
+
+struct LoopIterator {
+    start: f64,
+    iters: f64,
+    end: f64,
+    step_by: f64,
+}
+
+impl LoopIterator {
+    fn new(offset: f64, count_by: f64, num: Option<f64>, items: &[String]) -> LoopIterator {
+        let end = if let Some(num) = num {
+            num
+        } else if !items.is_empty() {
+            items.len() as f64
+        } else {
+            std::f64::INFINITY
+        };
+        LoopIterator {
+            start: offset - count_by,
+            iters: 0.0,
+            end,
+            step_by: count_by,
+        }
+    }
+}
+
+impl Iterator for LoopIterator {
+    type Item = f64;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        self.start += self.step_by;
+        self.iters += 1.0;
+        if self.iters <= self.end {
+            Some(self.start)
+        } else {
+            None
+        }
     }
 }
