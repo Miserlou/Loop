@@ -2,7 +2,7 @@ use std::fs::File;
 
 use subprocess::ExitStatus;
 
-static UNKONWN_EXIT_CODE: u32 = 99;
+static EXIT_CODE_UNKONWN: u32 = 99;
 
 pub struct State {
     pub tmpfile: File,
@@ -17,7 +17,7 @@ impl State {
         match exit_status {
             ExitStatus::Exited(0) => self.summary.successes += 1,
             ExitStatus::Exited(n) => self.summary.failures.push(n),
-            _ => self.summary.failures.push(UNKONWN_EXIT_CODE),
+            _ => self.summary.failures.push(EXIT_CODE_UNKONWN),
         }
     }
 }

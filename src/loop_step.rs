@@ -7,7 +7,7 @@ use std::time::{Duration, Instant, SystemTime};
 use subprocess::ExitStatus;
 
 /// same exit-code as used by the `timeout` shell command
-static TIMEOUT_EXIT_CODE: i32 = 124;
+static EXIT_CODE_TIMEOUT: i32 = 124;
 
 pub struct LoopModel {
     pub for_duration: Option<Duration>,
@@ -59,7 +59,7 @@ impl LoopModel {
             let since = Instant::now().duration_since(self.program_start);
             if since >= duration {
                 if self.error_duration {
-                    state.exit_status = TIMEOUT_EXIT_CODE
+                    state.exit_status = EXIT_CODE_TIMEOUT
                 }
                 return (true, state);
             }

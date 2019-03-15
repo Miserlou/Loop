@@ -5,6 +5,8 @@ mod setup;
 mod state;
 mod util;
 
+static EXIT_CODE_MINOR_ERROR: i32 = 2;
+
 fn main() {
     use io::pre_exit_tasks;
     use setup::setup;
@@ -14,8 +16,8 @@ fn main() {
     let m = setup();
 
     if m.is_no_command_supplied {
-        println!("No command supplied, exiting.");
-        return;
+        eprintln!("No command supplied, exiting.");
+        process::exit(EXIT_CODE_MINOR_ERROR);
     }
 
     let mut state = State::default();
