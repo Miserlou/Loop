@@ -1,4 +1,4 @@
-use crate::loop_step::{Env, LoopModel, ResultPrinter, ShellCommand};
+use crate::loop_step::LoopModel;
 
 use regex::Regex;
 use std::time::{Duration, Instant, SystemTime};
@@ -165,23 +165,17 @@ pub struct Opt {
     pub input: Vec<String>,
 }
 
-impl<'a> Opt {
+impl Opt {
     pub fn into_loop_model(
         self,
         cmd_with_args: String,
         program_start: Instant,
         items: Vec<String>,
-        env: &'a Env,
-        shell_command: &'a ShellCommand,
-        result_printer: &'a ResultPrinter,
-    ) -> LoopModel<'a> {
+    ) -> LoopModel {
         LoopModel {
             cmd_with_args,
             program_start,
             items,
-            env,
-            shell_command,
-            result_printer,
             for_duration: self.for_duration,
             error_duration: self.error_duration,
             until_time: self.until_time,

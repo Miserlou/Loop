@@ -9,7 +9,7 @@ use subprocess::ExitStatus;
 /// same exit-code as used by the `timeout` shell command
 static TIMEOUT_EXIT_CODE: i32 = 124;
 
-pub struct LoopModel<'a> {
+pub struct LoopModel {
     pub for_duration: Option<Duration>,
     pub error_duration: bool,
     pub until_time: Option<SystemTime>,
@@ -24,23 +24,22 @@ pub struct LoopModel<'a> {
     pub cmd_with_args: String,
     pub program_start: Instant,
     pub items: Vec<String>,
-
-    pub env: &'a dyn Env,
-    pub shell_command: &'a dyn ShellCommand,
-    pub result_printer: &'a dyn ResultPrinter,
 }
 
-impl<'a> LoopModel<'a> {
+impl LoopModel {
     #[must_use]
-    pub fn step(&self, mut state: State, counters: Counters) -> (bool, State) {
+    pub fn step(
+        &self,
+        mut state: State,
+        counters: Counters,
+        env: &impl Env,
+        shell_command: &impl ShellCommand,
+        result_printer: &impl ResultPrinter,
+    ) -> (bool, State) {
         use std::thread;
 
         // Time Start
         let loop_start = Instant::now();
-
-        let env = self.env;
-        let shell_command = self.shell_command;
-        let result_printer = self.result_printer;
 
         // Set counters before execution
         // THESE ARE FLIPPED AND I CAN'T UNFLIP THEM.

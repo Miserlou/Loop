@@ -29,24 +29,15 @@ fn main() {
     }
 
     // Counters and State
-    let env: &dyn Env = &RealEnv {};
-    let shell_command: &dyn ShellCommand = &RealShellCommand {};
-    let result_printer: &dyn ResultPrinter = &RealResultPrinter {
+    let env = RealEnv {};
+    let shell_command = RealShellCommand {};
+    let result_printer = RealResultPrinter {
         only_last: opt.only_last,
         until_contains: opt.until_contains.clone(),
         until_match: opt.until_match.clone(),
     };
-
     let iterator = LoopIterator::new(opt.offset, opt.count_by, opt.num, &items);
-
-    let loop_model = opt.into_loop_model(
-        cmd_with_args,
-        program_start,
-        items,
-        env,
-        shell_command,
-        result_printer,
-    );
+    let loop_model = opt.into_loop_model(cmd_with_args, program_start, items);
 
     let mut state = State::default();
 
@@ -57,7 +48,8 @@ fn main() {
             actual_count,
         };
 
-        let (break_loop, new_state) = loop_model.step(state, counters);
+        let (break_loop, new_state) =
+            loop_model.step(state, counters, &env, &shell_command, &result_printer);
         state = new_state;
 
         if break_loop {
