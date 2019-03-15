@@ -1,3 +1,5 @@
+use crate::loop_step::{Env, LoopModel, ResultPrinter, ShellCommand};
+
 use regex::Regex;
 use std::time::{Duration, Instant, SystemTime};
 
@@ -49,14 +51,14 @@ pub enum ErrorCode {
     Code(u32),
 }
 
-fn get_error_code(input: &&str) -> ErrorCode {
+fn get_error_code(input: &str) -> ErrorCode {
     input
         .parse()
         .map(ErrorCode::Code)
         .unwrap_or_else(|_| ErrorCode::Any)
 }
 
-fn get_values(input: &&str) -> Vec<String> {
+fn get_values(input: &str) -> Vec<String> {
     if input.contains('\n') {
         input.split('\n').map(String::from).collect()
     } else if input.contains(',') {
@@ -161,4 +163,35 @@ pub struct Opt {
     /// The command to be looped
     #[structopt(raw(multiple = "true"))]
     pub input: Vec<String>,
+}
+
+impl<'a> Opt {
+    pub fn into_loop_model(
+        self,
+        cmd_with_args: String,
+        program_start: Instant,
+        items: Vec<String>,
+        env: &'a Env,
+        shell_command: &'a ShellCommand,
+        result_printer: &'a ResultPrinter,
+    ) -> LoopModel<'a> {
+        LoopModel {
+            cmd_with_args,
+            program_start,
+            items,
+            env,
+            shell_command,
+            result_printer,
+            for_duration: self.for_duration,
+            error_duration: self.error_duration,
+            until_time: self.until_time,
+            until_error: self.until_error,
+            until_success: self.until_success,
+            until_fail: self.until_fail,
+            summary: self.summary,
+            until_changes: self.until_changes,
+            until_same: self.until_same,
+            every: self.every,
+        }
+    }
 }

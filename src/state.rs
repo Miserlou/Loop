@@ -12,14 +12,8 @@ pub struct State {
     pub has_matched: bool,
 }
 
-pub struct Counters {
-    pub index: usize,
-    pub count_precision: usize,
-    pub actual_count: f64,
-}
-
 impl State {
-    pub fn summary_exit_status(&mut self, exit_status: subprocess::ExitStatus) {
+    pub fn update_summary(&mut self, exit_status: subprocess::ExitStatus) {
         match exit_status {
             ExitStatus::Exited(0) => self.summary.successes += 1,
             ExitStatus::Exited(n) => self.summary.failures.push(n),
@@ -38,6 +32,12 @@ impl Default for State {
             exit_status: 0,
         }
     }
+}
+
+pub struct Counters {
+    pub index: usize,
+    pub count_precision: usize,
+    pub actual_count: f64,
 }
 
 #[derive(Debug)]

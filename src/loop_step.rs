@@ -44,15 +44,15 @@ impl<'a> LoopModel<'a> {
 
         // Set counters before execution
         // THESE ARE FLIPPED AND I CAN'T UNFLIP THEM.
-        env.set_var("ACTUALCOUNT", &counters.index.to_string());
-        env.set_var(
+        env.set("ACTUALCOUNT", &counters.index.to_string());
+        env.set(
             "COUNT",
             &format!("{:.*}", counters.count_precision, counters.actual_count),
         );
 
         // Set iterated item as environment variable
         if let Some(item) = self.items.get(counters.index) {
-            env.set_var("ITEM", item);
+            env.set("ITEM", item);
         }
 
         // Finish if we're over our duration
@@ -81,10 +81,10 @@ impl<'a> LoopModel<'a> {
 
         // Print the results
         let stdout = String::from_temp_start(&mut state.tmpfile);
-        state = result_printer.print_and_mutate(state, &stdout);
+        state = result_printer.print(state, &stdout);
 
         // --until-error
-        check_for_error(self.until_error, &mut state.has_matched, exit_status);
+        check_for_error(exit_status, self.until_error, &mut state.has_matched);
 
         // --until-success
         if self.until_success && exit_status.success() {
@@ -92,12 +92,12 @@ impl<'a> LoopModel<'a> {
         }
 
         // --until-fail
-        if self.until_fail && !(exit_status.success()) {
+        if self.until_fail && !exit_status.success() {
             state.has_matched = true;
         }
 
         if self.summary {
-            state.summary_exit_status(exit_status);
+            state.update_summary(exit_status);
         }
 
         // Finish if we matched
@@ -129,9 +129,9 @@ impl<'a> LoopModel<'a> {
 }
 
 fn check_for_error(
+    exit_status: ExitStatus,
     maybe_error: Option<ErrorCode>,
     has_matched: &mut bool,
-    exit_status: ExitStatus,
 ) {
     match maybe_error {
         Some(ErrorCode::Any) => {
@@ -147,7 +147,7 @@ fn check_for_error(
 }
 
 pub trait Env {
-    fn set_var(&self, k: &str, v: &str);
+    fn set(&self, k: &str, v: &str);
 }
 
 pub trait ShellCommand {
@@ -157,5 +157,5 @@ pub trait ShellCommand {
 
 pub trait ResultPrinter {
     #[must_use]
-    fn print_and_mutate(&self, state: State, stdout: &str) -> State;
+    fn print(&self, state: State, stdout: &str) -> State;
 }

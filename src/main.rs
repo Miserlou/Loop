@@ -3,14 +3,14 @@ mod setup;
 mod state;
 mod util;
 
-use loop_step::{Env, LoopModel, ResultPrinter, ShellCommand};
-use setup::{setup, Opt};
+use loop_step::{Env, ResultPrinter, ShellCommand};
+use setup::setup;
 use state::{Counters, State, Summary};
 
 use std::fs::File;
 use std::process;
 
-use std::time::Instant;
+use regex::Regex;
 use subprocess::{Exec, ExitStatus, Redirection};
 
 fn main() {
@@ -29,12 +29,15 @@ fn main() {
     // Counters and State
     let env: &dyn Env = &RealEnv {};
     let shell_command: &dyn ShellCommand = &RealShellCommand {};
-    let result_printer: &dyn ResultPrinter = &RealResultPrinter { opt: &opt };
+    let result_printer: &dyn ResultPrinter = &RealResultPrinter {
+        only_last: opt.only_last,
+        until_contains: opt.until_contains.clone(),
+        until_match: opt.until_match.clone(),
+    };
 
     let iterator = LoopIterator::new(opt.offset, opt.count_by, opt.num, &items);
 
-    let loop_model = create_loop_model(
-        &opt,
+    let loop_model = opt.into_loop_model(
         cmd_with_args,
         program_start,
         items,
@@ -68,7 +71,7 @@ fn main() {
 struct RealEnv {}
 
 impl Env for RealEnv {
-    fn set_var(&self, k: &str, v: &str) {
+    fn set(&self, k: &str, v: &str) {
         std::env::set_var(k, v);
     }
 }
@@ -93,62 +96,35 @@ impl ShellCommand for RealShellCommand {
     }
 }
 
-struct RealResultPrinter<'a> {
-    opt: &'a Opt,
+struct RealResultPrinter {
+    only_last: bool,
+    until_contains: Option<String>,
+    until_match: Option<Regex>,
 }
 
-impl<'a> ResultPrinter for RealResultPrinter<'a> {
-    fn print_and_mutate(&self, mut state: State, stdout: &str) -> State {
+impl ResultPrinter for RealResultPrinter {
+    fn print(&self, mut state: State, stdout: &str) -> State {
         stdout.lines().for_each(|line| {
             // --only-last
             // If we only want output from the last execution,
             // defer printing until later
-            if !self.opt.only_last {
+            if !self.only_last {
                 println!("{}", line);
             }
 
             // --until-contains
             // We defer loop breaking until the entire result is printed.
-            if let Some(ref string) = self.opt.until_contains {
+            if let Some(ref string) = self.until_contains {
                 state.has_matched = line.contains(string);
             }
 
             // --until-match
-            if let Some(ref regex) = self.opt.until_match {
+            if let Some(ref regex) = self.until_match {
                 state.has_matched = regex.captures(&line).is_some();
             }
         });
 
         state
-    }
-}
-
-fn create_loop_model<'a>(
-    opt: &Opt,
-    cmd_with_args: String,
-    program_start: Instant,
-    items: Vec<String>,
-    env: &'a Env,
-    shell_command: &'a ShellCommand,
-    result_printer: &'a ResultPrinter,
-) -> LoopModel<'a> {
-    LoopModel {
-        cmd_with_args,
-        program_start,
-        items,
-        env,
-        shell_command,
-        result_printer,
-        for_duration: opt.for_duration,
-        error_duration: opt.error_duration,
-        until_time: opt.until_time,
-        until_error: opt.until_error,
-        until_success: opt.until_success,
-        until_fail: opt.until_fail,
-        summary: opt.summary,
-        until_changes: opt.until_changes,
-        until_same: opt.until_same,
-        every: opt.every,
     }
 }
 

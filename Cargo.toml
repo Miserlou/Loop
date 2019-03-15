@@ -13,7 +13,7 @@ readme = "README.md"
 license = "MIT"
 
 [dependencies]
-structopt = "0.2.14"
+structopt = "0.2.15"
 humantime = "1.2.0"
 atty = "0.2.11"
 regex = "1.1.2"
