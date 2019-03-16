@@ -1,14 +1,15 @@
 mod io;
 mod loop_iterator;
 mod loop_step;
+mod run;
 mod setup;
 mod state;
 mod util;
 
 fn main() {
-    use io::pre_exit_tasks;
+    use run::run;
     use setup::setup;
-    use state::{Counters, ExitCode, State};
+    use state::ExitCode;
     use std::process;
 
     let m = setup();
@@ -18,27 +19,7 @@ fn main() {
         process::exit(ExitCode::MinorError.into());
     }
 
-    let mut state = State::default();
-    let loop_model = m.loop_model;
+    let exit_code = run(m);
 
-    for (index, actual_count) in m.iterator.enumerate() {
-        let counters = Counters {
-            count_precision: m.count_precision,
-            index,
-            actual_count,
-        };
-
-        let (break_loop, new_state) =
-            loop_model.step(state, counters, &m.env, &m.shell_command, &m.result_printer);
-
-        state = new_state;
-
-        if break_loop {
-            break;
-        }
-    }
-
-    pre_exit_tasks(m.opt_only_last, m.opt_summary, state.summary, state.tmpfile);
-
-    process::exit(state.exit_code.into());
+    process::exit(exit_code.into());
 }
