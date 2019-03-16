@@ -12,14 +12,14 @@ fn main() {
     use state::ExitCode;
     use std::process;
 
-    let m = setup();
+    let app = setup();
 
-    if m.is_no_command_supplied {
+    if app.is_no_command_supplied {
         eprintln!("No command supplied, exiting.");
         process::exit(ExitCode::MinorError.into());
     }
 
-    let exit_code = run(m);
+    let exit_code = run(app);
 
     process::exit(exit_code.into());
 }

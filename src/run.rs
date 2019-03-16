@@ -1,22 +1,22 @@
-use crate::setup::Setup;
+use crate::setup::App;
 use crate::state::ExitCode;
 
-pub fn run(m: Setup) -> ExitCode {
+pub fn run(a: App) -> ExitCode {
     use crate::io::pre_exit_tasks;
     use crate::state::{Counters, State};
 
     let mut state = State::default();
-    let loop_model = m.loop_model;
+    let loop_model = a.loop_model;
 
-    for (index, actual_count) in m.iterator.enumerate() {
+    for (index, actual_count) in a.iterator.enumerate() {
         let counters = Counters {
-            count_precision: m.count_precision,
+            count_precision: a.count_precision,
             index,
             actual_count,
         };
 
         let (break_loop, new_state) =
-            loop_model.step(state, counters, &m.env, &m.shell_command, &m.result_printer);
+            loop_model.step(state, counters, &a.env, &a.shell_command, &a.result_printer);
 
         state = new_state;
 
@@ -25,7 +25,7 @@ pub fn run(m: Setup) -> ExitCode {
         }
     }
 
-    pre_exit_tasks(m.opt_only_last, m.opt_summary, state.summary, state.tmpfile);
+    pre_exit_tasks(a.opt_only_last, a.opt_summary, state.summary, state.tmpfile);
 
     state.exit_code
 }

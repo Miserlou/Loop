@@ -8,7 +8,7 @@ use humantime::{parse_duration, parse_rfc3339_weak};
 use regex::Regex;
 use structopt::StructOpt;
 
-pub struct Setup {
+pub struct App {
     pub count_precision: usize,
     pub is_no_command_supplied: bool,
     pub opt_only_last: bool,
@@ -22,7 +22,7 @@ pub struct Setup {
     pub loop_model: LoopModel,
 }
 
-pub fn setup() -> Setup {
+pub fn setup() -> App {
     use std::io::{self, BufRead};
 
     // Time
@@ -65,7 +65,7 @@ pub fn setup() -> Setup {
     let iterator = LoopIterator::new(opt.offset, opt.count_by, opt.num, &items);
     let loop_model = opt.into_loop_model(cmd_with_args, program_start, items);
 
-    Setup {
+    App {
         count_precision,
         is_no_command_supplied,
         opt_only_last,
