@@ -6,6 +6,7 @@ use std::time::{Duration, Instant, SystemTime};
 
 use subprocess::ExitStatus;
 
+#[derive(Debug)]
 pub struct LoopModel {
     pub for_duration: Option<Duration>,
     pub error_duration: bool,

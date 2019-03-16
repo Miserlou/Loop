@@ -8,9 +8,9 @@ use humantime::{parse_duration, parse_rfc3339_weak};
 use regex::Regex;
 use structopt::StructOpt;
 
+#[derive(Debug)]
 pub struct App {
     pub count_precision: usize,
-    pub is_no_command_supplied: bool,
     pub opt_only_last: bool,
     pub opt_summary: bool,
 
@@ -22,15 +22,12 @@ pub struct App {
     pub loop_model: LoopModel,
 }
 
-pub fn setup() -> App {
+pub fn setup(mut opt: Opt) -> Result<App, AppError> {
     use std::io::{self, BufRead};
     use std::mem;
 
     // Time
     let program_start = Instant::now();
-
-    // Load the CLI arguments
-    let mut opt = Opt::from_args();
 
     let count_precision = Opt::clap()
         .get_matches()
@@ -39,7 +36,13 @@ pub fn setup() -> App {
         .unwrap_or(0);
 
     let cmd_with_args = opt.input.join(" ");
-    let is_no_command_supplied = cmd_with_args.is_empty();
+    if cmd_with_args.is_empty() {
+        return Err(AppError::new(
+            ExitCode::MinorError,
+            "No command supplied, exiting.",
+        ));
+    }
+
     let opt_only_last = opt.only_last;
     let opt_summary = opt.summary;
 
@@ -69,9 +72,8 @@ pub fn setup() -> App {
     let iterator = LoopIterator::new(opt.offset, opt.count_by, opt.num, &items);
     let loop_model = opt.into_loop_model(cmd_with_args, program_start, items);
 
-    App {
+    Ok(App {
         count_precision,
-        is_no_command_supplied,
         opt_only_last,
         opt_summary,
 
@@ -81,6 +83,24 @@ pub fn setup() -> App {
 
         iterator,
         loop_model,
+    })
+}
+
+#[derive(Debug, PartialEq, Clone)]
+pub struct AppError {
+    pub exit_code: ExitCode,
+    pub message: String,
+}
+
+impl AppError {
+    pub fn new<M>(exit_code: ExitCode, msg: M) -> AppError
+    where
+        M: Into<String>,
+    {
+        AppError {
+            exit_code,
+            message: msg.into(),
+        }
     }
 }
 
@@ -117,7 +137,7 @@ fn get_values(input: &str) -> Vec<String> {
     author = "Rich Jones <miserlou@gmail.com>",
     about = "UNIX's missing `loop` command"
 )]
-struct Opt {
+pub struct Opt {
     /// Number of iterations to execute
     #[structopt(short = "n", long = "num")]
     num: Option<f64>,
@@ -231,4 +251,43 @@ impl Opt {
             every: self.every,
         }
     }
+}
+
+impl Default for Opt {
+    fn default() -> Opt {
+        Opt {
+            num: None,
+            count_by: 1_f64,
+            offset: 0_f64,
+            every: parse_duration("1us").unwrap(),
+            ffor: None,
+            for_duration: None,
+            until_contains: None,
+            until_changes: false,
+            until_same: false,
+            until_match: None,
+            until_time: None,
+            until_error: None,
+            until_success: false,
+            until_fail: false,
+            only_last: false,
+            stdin: false,
+            error_duration: false,
+            summary: false,
+            input: vec![],
+        }
+    }
+}
+
+#[test]
+fn test_setup() {
+    // okay
+    let mut opt = Opt::default();
+    opt.input = vec!["foobar".to_owned()];
+    assert!(setup(opt).is_ok());
+
+    // no command
+    let opt = Opt::default();
+    let app_error = AppError::new(ExitCode::MinorError, "No command supplied, exiting.");
+    assert_eq!(setup(opt).unwrap_err(), app_error);
 }

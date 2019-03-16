@@ -6,6 +6,7 @@ use std::fs::File;
 use regex::Regex;
 use subprocess::{Exec, ExitStatus, Redirection};
 
+#[derive(Debug)]
 pub struct RealEnv {}
 
 impl Env for RealEnv {
@@ -14,6 +15,7 @@ impl Env for RealEnv {
     }
 }
 
+#[derive(Debug)]
 pub struct RealShellCommand {}
 
 impl ShellCommand for RealShellCommand {
@@ -34,6 +36,7 @@ impl ShellCommand for RealShellCommand {
     }
 }
 
+#[derive(Debug)]
 pub struct RealResultPrinter {
     only_last: bool,
     until_contains: Option<String>,
@@ -94,7 +97,7 @@ pub fn pre_exit_tasks(only_last: bool, print_summary: bool, summary: Summary, mu
     }
 }
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy)]
 pub enum ExitCode {
     Okay,
     Error,

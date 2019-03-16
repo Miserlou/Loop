@@ -7,19 +7,22 @@ mod state;
 mod util;
 
 fn main() {
-    use io::ExitCode;
     use run::run;
-    use setup::setup;
+    use setup::{setup, Opt};
     use std::process;
+    use structopt::StructOpt;
 
-    let app = setup();
+    let app = setup(Opt::from_args());
 
-    if app.is_no_command_supplied {
-        eprintln!("No command supplied, exiting.");
-        process::exit(ExitCode::MinorError.into());
-    }
-
-    let exit_code = run(app);
+    let exit_code = match app {
+        Ok(app) => run(app),
+        Err(err) => {
+            if !err.message.is_empty() {
+                eprintln!("{}", err.message);
+            }
+            err.exit_code
+        }
+    };
 
     process::exit(exit_code.into());
 }
