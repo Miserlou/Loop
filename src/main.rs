@@ -7,9 +7,9 @@ mod state;
 mod util;
 
 fn main() {
+    use io::ExitCode;
     use run::run;
     use setup::setup;
-    use state::ExitCode;
     use std::process;
 
     let app = setup();

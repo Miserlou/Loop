@@ -1,4 +1,4 @@
-use crate::io::{RealEnv, RealResultPrinter, RealShellCommand};
+use crate::io::{ExitCode, RealEnv, RealResultPrinter, RealShellCommand};
 use crate::loop_iterator::LoopIterator;
 use crate::loop_step::LoopModel;
 
@@ -90,17 +90,11 @@ fn precision_of(s: &str) -> usize {
     exp - after_point
 }
 
-#[derive(Debug, Clone, Copy)]
-pub enum ErrorCode {
-    Any,
-    Code(u32),
-}
-
-fn get_error_code(input: &str) -> ErrorCode {
+fn get_exit_code(input: &str) -> ExitCode {
     input
         .parse()
-        .map(ErrorCode::Code)
-        .unwrap_or_else(|_| ErrorCode::Any)
+        .map(ExitCode::Other)
+        .unwrap_or_else(|_| ExitCode::Error)
 }
 
 fn get_values(input: &str) -> Vec<String> {
@@ -178,8 +172,8 @@ struct Opt {
     until_time: Option<SystemTime>,
 
     /// Keep going until the command exit status is non-zero, or the value given
-    #[structopt(short = "r", long = "until-error", parse(from_str = "get_error_code"))]
-    until_error: Option<ErrorCode>,
+    #[structopt(short = "r", long = "until-error", parse(from_str = "get_exit_code"))]
+    until_error: Option<ExitCode>,
 
     /// Keep going until the command exit status is zero
     #[structopt(short = "s", long = "until-success")]

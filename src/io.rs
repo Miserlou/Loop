@@ -93,3 +93,33 @@ pub fn pre_exit_tasks(only_last: bool, print_summary: bool, summary: Summary, mu
         summary.print()
     }
 }
+
+#[derive(Debug, Clone, Copy)]
+pub enum ExitCode {
+    Okay,
+    Error,
+    MinorError,
+    /// same exit-code as used by the `timeout` shell command (99)
+    Timeout,
+    Unkonwn,
+    Other(u32),
+}
+
+impl Into<u32> for ExitCode {
+    fn into(self) -> u32 {
+        match self {
+            ExitCode::Okay => 0,
+            ExitCode::Error => 1,
+            ExitCode::MinorError => 2,
+            ExitCode::Unkonwn => 99,
+            ExitCode::Timeout => 124,
+            ExitCode::Other(code) => code,
+        }
+    }
+}
+
+impl Into<i32> for ExitCode {
+    fn into(self) -> i32 {
+        Into::<u32>::into(self) as i32
+    }
+}

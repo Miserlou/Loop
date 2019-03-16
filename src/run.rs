@@ -1,5 +1,5 @@
+use crate::io::ExitCode;
 use crate::setup::App;
-use crate::state::ExitCode;
 
 pub fn run(a: App) -> ExitCode {
     use crate::io::pre_exit_tasks;

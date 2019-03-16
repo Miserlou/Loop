@@ -1,5 +1,5 @@
-use crate::setup::ErrorCode;
-use crate::state::{Counters, ExitCode, State};
+use crate::io::ExitCode;
+use crate::state::{Counters, State};
 use crate::util::StringFromTempfileStart;
 
 use std::time::{Duration, Instant, SystemTime};
@@ -10,7 +10,7 @@ pub struct LoopModel {
     pub for_duration: Option<Duration>,
     pub error_duration: bool,
     pub until_time: Option<SystemTime>,
-    pub until_error: Option<ErrorCode>,
+    pub until_error: Option<ExitCode>,
     pub until_success: bool,
     pub until_fail: bool,
     pub summary: bool,
@@ -93,7 +93,7 @@ impl LoopModel {
         }
 
         if self.summary {
-            state.update_summary(exit_status);
+            state.summary.update(exit_status);
         }
 
         // Finish if we matched
@@ -124,17 +124,13 @@ impl LoopModel {
     }
 }
 
-fn check_for_error(
-    exit_status: ExitStatus,
-    maybe_error: Option<ErrorCode>,
-    has_matched: &mut bool,
-) {
+fn check_for_error(exit_status: ExitStatus, maybe_error: Option<ExitCode>, has_matched: &mut bool) {
     match maybe_error {
-        Some(ErrorCode::Any) => {
+        Some(ExitCode::Error) => {
             *has_matched = !exit_status.success();
         }
-        Some(ErrorCode::Code(code)) => {
-            if exit_status == ExitStatus::Exited(code) {
+        Some(ExitCode::Other(code)) => {
+            if ExitStatus::Exited(code) == exit_status {
                 *has_matched = true;
             }
         }

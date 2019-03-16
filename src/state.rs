@@ -1,3 +1,5 @@
+use crate::io::ExitCode;
+
 use std::fs::File;
 
 use subprocess::ExitStatus;
@@ -8,16 +10,6 @@ pub struct State {
     pub exit_code: ExitCode,
     pub previous_stdout: Option<String>,
     pub has_matched: bool,
-}
-
-impl State {
-    pub fn update_summary(&mut self, exit_status: ExitStatus) {
-        match exit_status {
-            ExitStatus::Exited(0) => self.summary.successes += 1,
-            ExitStatus::Exited(n) => self.summary.failures.push(n as i32),
-            _ => self.summary.failures.push(ExitCode::Unkonwn.into()),
-        }
-    }
 }
 
 impl Default for State {
@@ -40,13 +32,21 @@ pub struct Counters {
 
 #[derive(Debug)]
 pub struct Summary {
-    successes: i32,
-    failures: Vec<i32>,
+    successes: u32,
+    failures: Vec<u32>,
 }
 
 impl Summary {
+    pub fn update(&mut self, exit_status: ExitStatus) {
+        match exit_status {
+            ExitStatus::Exited(0) => self.successes += 1,
+            ExitStatus::Exited(n) => self.failures.push(n),
+            _ => self.failures.push(ExitCode::Unkonwn.into()),
+        }
+    }
+
     pub fn print(self) {
-        let total = self.successes + self.failures.len() as i32;
+        let total = self.successes + self.failures.len() as u32;
 
         let errors = if self.failures.is_empty() {
             String::from("0")
@@ -74,19 +74,5 @@ impl Default for Summary {
             successes: 0,
             failures: Vec::new(),
         }
-    }
-}
-
-pub enum ExitCode {
-    Okay = 0,
-    MinorError = 2,
-    /// same exit-code as used by the `timeout` shell command
-    Timeout = 124,
-    Unkonwn = 99,
-}
-
-impl From<ExitCode> for i32 {
-    fn from(ec: ExitCode) -> i32 {
-        ec as i32
     }
 }
