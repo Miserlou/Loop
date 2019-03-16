@@ -24,12 +24,13 @@ pub struct App {
 
 pub fn setup() -> App {
     use std::io::{self, BufRead};
+    use std::mem;
 
     // Time
     let program_start = Instant::now();
 
     // Load the CLI arguments
-    let opt = Opt::from_args();
+    let mut opt = Opt::from_args();
 
     let count_precision = Opt::clap()
         .get_matches()
@@ -51,7 +52,10 @@ pub fn setup() -> App {
     );
 
     // Number of iterations
-    let mut items: Vec<String> = opt.ffor.clone().unwrap_or_else(|| vec![]);
+    let mut items: Vec<String> = vec![];
+    if let Some(ref mut v) = opt.ffor {
+        mem::swap(&mut items, v);
+    }
 
     // Get any lines from stdin
     if opt.stdin || atty::isnt(atty::Stream::Stdin) {
