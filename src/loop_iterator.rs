@@ -1,4 +1,3 @@
-#[derive(Debug)]
 pub struct LoopIterator {
     start: f64,
     iters: f64,

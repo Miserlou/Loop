@@ -1,5 +1,5 @@
 use crate::app::App;
-use crate::io::{ExitCode, RealEnv, RealResultPrinter, RealShellCommand};
+use crate::io::{ExitCode, Printer};
 use crate::loop_iterator::LoopIterator;
 use crate::loop_step::LoopModel;
 
@@ -9,7 +9,7 @@ use humantime::{parse_duration, parse_rfc3339_weak};
 use regex::Regex;
 use structopt::StructOpt;
 
-pub fn setup(mut opt: Opt) -> Result<App, AppError> {
+pub fn setup(mut opt: Opt) -> Result<(App, Printer), AppError> {
     use std::io::{self, BufRead};
     use std::mem;
 
@@ -32,19 +32,19 @@ pub fn setup(mut opt: Opt) -> Result<App, AppError> {
 
     let opt_only_last = opt.only_last;
     let opt_summary = opt.summary;
+    let every = opt.every;
 
-    let env = RealEnv {};
-    let shell_command = RealShellCommand {};
-    let result_printer = RealResultPrinter::new(
-        opt.only_last,
-        opt.until_contains.clone(),
-        opt.until_match.clone(),
-    );
+    let printer_model = Printer {
+        only_last: opt.only_last,
+        until_contains: opt.until_contains.clone(),
+        until_match: opt.until_match.clone(),
+    };
 
     // Number of iterations
     let mut items: Vec<String> = vec![];
     if let Some(ref mut v) = opt.ffor {
         mem::swap(&mut items, v);
+        opt.ffor = None;
     }
 
     // Get any lines from stdin
@@ -57,20 +57,21 @@ pub fn setup(mut opt: Opt) -> Result<App, AppError> {
     }
 
     let iterator = LoopIterator::new(opt.offset, opt.count_by, opt.num, &items);
-    let loop_model = opt.into_loop_model(cmd_with_args, program_start, items);
+    let loop_model = opt.into_loop_model(program_start);
 
-    Ok(App {
-        count_precision,
-        opt_only_last,
-        opt_summary,
-
-        env,
-        shell_command,
-        result_printer,
-
-        iterator,
-        loop_model,
-    })
+    Ok((
+        App {
+            count_precision,
+            opt_only_last,
+            opt_summary,
+            cmd_with_args,
+            every,
+            iterator,
+            loop_model,
+            items,
+        },
+        printer_model,
+    ))
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -216,16 +217,9 @@ pub struct Opt {
 }
 
 impl Opt {
-    fn into_loop_model(
-        self,
-        cmd_with_args: String,
-        program_start: Instant,
-        items: Vec<String>,
-    ) -> LoopModel {
+    fn into_loop_model(self, program_start: Instant) -> LoopModel {
         LoopModel {
-            cmd_with_args,
             program_start,
-            items,
             for_duration: self.for_duration,
             error_duration: self.error_duration,
             until_time: self.until_time,
@@ -235,7 +229,6 @@ impl Opt {
             summary: self.summary,
             until_changes: self.until_changes,
             until_same: self.until_same,
-            every: self.every,
         }
     }
 }
@@ -276,5 +269,8 @@ fn test_setup() {
     // no command
     let opt = Opt::default();
     let app_error = AppError::new(ExitCode::MinorError, "No command supplied, exiting.");
-    assert_eq!(setup(opt).unwrap_err(), app_error);
+    match setup(opt) {
+        Err(err) => assert_eq!(err, app_error),
+        _ => panic!(),
+    }
 }

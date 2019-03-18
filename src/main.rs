@@ -14,7 +14,7 @@ fn main() {
     let app = setup(Opt::from_args());
 
     let exit_code = match app {
-        Ok(app) => app.run(),
+        Ok((app, printer)) => app.run(printer),
         Err(err) => {
             if !err.message.is_empty() {
                 eprintln!("{}", err.message);

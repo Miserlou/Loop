@@ -2,8 +2,6 @@ use crate::io::ExitCode;
 
 use std::fs::File;
 
-use subprocess::ExitStatus;
-
 pub struct State {
     pub tmpfile: File,
     pub summary: Summary,
@@ -24,24 +22,16 @@ impl Default for State {
     }
 }
 
-pub struct Counters {
-    pub index: usize,
-    pub count_precision: usize,
-    pub actual_count: f64,
-}
-
-#[derive(Debug)]
 pub struct Summary {
     successes: u32,
     failures: Vec<u32>,
 }
 
 impl Summary {
-    pub fn update(&mut self, exit_status: ExitStatus) {
-        match exit_status {
-            ExitStatus::Exited(0) => self.successes += 1,
-            ExitStatus::Exited(n) => self.failures.push(n),
-            _ => self.failures.push(ExitCode::Unkonwn.into()),
+    pub fn update(&mut self, exit_code: ExitCode) {
+        match exit_code {
+            ExitCode::Okay => self.successes += 1,
+            err => self.failures.push(err.into()),
         }
     }
 
