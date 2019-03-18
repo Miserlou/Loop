@@ -1,5 +1,5 @@
 use crate::app::App;
-use crate::io::{ExitCode, Printer};
+use crate::io::{ExitCode, PreExitTasks, Printer};
 use crate::loop_iterator::LoopIterator;
 use crate::loop_step::LoopModel;
 
@@ -9,7 +9,7 @@ use humantime::{parse_duration, parse_rfc3339_weak};
 use regex::Regex;
 use structopt::StructOpt;
 
-pub fn setup(mut opt: Opt) -> Result<(App, Printer), AppError> {
+pub fn setup(mut opt: Opt) -> Result<(App, Printer, PreExitTasks), AppError> {
     use std::io::{self, BufRead};
     use std::mem;
 
@@ -30,14 +30,17 @@ pub fn setup(mut opt: Opt) -> Result<(App, Printer), AppError> {
         ));
     }
 
-    let opt_only_last = opt.only_last;
-    let opt_summary = opt.summary;
     let every = opt.every;
 
     let printer_model = Printer {
         only_last: opt.only_last,
         until_contains: opt.until_contains.clone(),
         until_match: opt.until_match.clone(),
+    };
+
+    let exit_tasks = PreExitTasks {
+        opt_only_last: opt.only_last,
+        opt_summary: opt.summary,
     };
 
     // Number of iterations
@@ -62,8 +65,6 @@ pub fn setup(mut opt: Opt) -> Result<(App, Printer), AppError> {
     Ok((
         App {
             count_precision,
-            opt_only_last,
-            opt_summary,
             cmd_with_args,
             every,
             iterator,
@@ -71,6 +72,7 @@ pub fn setup(mut opt: Opt) -> Result<(App, Printer), AppError> {
             items,
         },
         printer_model,
+        exit_tasks,
     ))
 }
 

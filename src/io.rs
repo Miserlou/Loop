@@ -1,4 +1,6 @@
-use crate::state::State;
+use crate::state::{State, Summary};
+
+use std::fs::File;
 
 use regex::Regex;
 use subprocess::{Exec, ExitStatus, Redirection};
@@ -68,6 +70,27 @@ impl Printer {
         });
 
         state
+    }
+}
+
+pub struct PreExitTasks {
+    pub opt_only_last: bool,
+    pub opt_summary: bool,
+}
+
+impl PreExitTasks {
+    pub fn run(&self, summary: Summary, mut tmpfile: File) {
+        use crate::util::StringFromTempfileStart;
+
+        if self.opt_only_last {
+            String::from_temp_start(&mut tmpfile)
+                .lines()
+                .for_each(|line| println!("{}", line));
+        }
+
+        if self.opt_summary {
+            summary.print()
+        }
     }
 }
 

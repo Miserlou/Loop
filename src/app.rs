@@ -1,16 +1,11 @@
-use crate::io::ExitCode;
-use crate::io::Printer;
+use crate::io::{ExitCode, PreExitTasks, Printer};
 use crate::loop_iterator::LoopIterator;
 use crate::loop_step::LoopModel;
-use crate::state::Summary;
 
-use std::fs::File;
 use std::time::{Duration, Instant};
 
 pub struct App {
     pub count_precision: usize,
-    pub opt_only_last: bool,
-    pub opt_summary: bool,
     pub cmd_with_args: String,
     pub every: Duration,
     pub iterator: LoopIterator,
@@ -20,7 +15,7 @@ pub struct App {
 
 impl App {
     #[must_use]
-    pub fn run(self, printer: Printer) -> ExitCode {
+    pub fn run(self, printer: Printer, exit_tasks: PreExitTasks) -> ExitCode {
         use crate::io::{setup_environment, shell_command};
         use crate::state::State;
 
@@ -55,12 +50,7 @@ impl App {
             maybe_sleep(step_start_time, self.every);
         }
 
-        pre_exit_tasks(
-            self.opt_only_last,
-            self.opt_summary,
-            state.summary,
-            state.tmpfile,
-        );
+        exit_tasks.run(state.summary, state.tmpfile);
 
         state.exit_code
     }
@@ -72,19 +62,5 @@ fn maybe_sleep(step_start: Instant, every: Duration) {
     let since = Instant::now().duration_since(step_start);
     if let Some(time) = every.checked_sub(since) {
         thread::sleep(time);
-    }
-}
-
-pub fn pre_exit_tasks(only_last: bool, print_summary: bool, summary: Summary, mut tmpfile: File) {
-    use crate::util::StringFromTempfileStart;
-
-    if only_last {
-        String::from_temp_start(&mut tmpfile)
-            .lines()
-            .for_each(|line| println!("{}", line));
-    }
-
-    if print_summary {
-        summary.print()
     }
 }
