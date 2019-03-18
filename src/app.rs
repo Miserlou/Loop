@@ -8,8 +8,8 @@ use std::time::{Duration, Instant};
 
 pub struct App {
     pub every: Duration,
-    pub iterator: LoopIterator,
     pub loop_model: LoopModel,
+    pub iterator: LoopIterator,
 }
 
 impl App {

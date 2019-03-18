@@ -122,3 +122,22 @@ fn until_error_check(has_matched: &mut bool, to_check: Option<ExitCode>, exit_co
         _ => (),
     }
 }
+
+impl Default for LoopModel {
+    fn default() -> LoopModel {
+        use std::time::Instant;
+
+        LoopModel {
+            for_duration: None,
+            error_duration: false,
+            until_time: None,
+            until_error: None,
+            until_success: false,
+            until_fail: false,
+            summary: false,
+            until_changes: false,
+            until_same: false,
+            program_start: Instant::now(),
+        }
+    }
+}

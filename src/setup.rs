@@ -1,5 +1,5 @@
 use crate::app::App;
-use crate::io::{ExitCode, PreExitTasks, Printer, SetupEnv, ShellCommand};
+use crate::io::{ExitCode, ExitTasks, Printer, SetupEnv, ShellCommand};
 use crate::loop_iterator::LoopIterator;
 use crate::loop_step::LoopModel;
 
@@ -9,9 +9,7 @@ use humantime::{parse_duration, parse_rfc3339_weak};
 use regex::Regex;
 use structopt::StructOpt;
 
-pub fn setup(
-    mut opt: Opt,
-) -> Result<(App, Printer, PreExitTasks, SetupEnv, ShellCommand), AppError> {
+pub fn setup(mut opt: Opt) -> Result<(App, Printer, ExitTasks, SetupEnv, ShellCommand), AppError> {
     use std::io::{self, BufRead};
     use std::mem;
 
@@ -40,7 +38,7 @@ pub fn setup(
         until_match: opt.until_match.clone(),
     };
 
-    let exit_tasks = PreExitTasks {
+    let exit_tasks = ExitTasks {
         opt_only_last: opt.only_last,
         opt_summary: opt.summary,
     };
@@ -70,8 +68,8 @@ pub fn setup(
 
     let app = App {
         every,
-        iterator,
         loop_model,
+        iterator,
     };
 
     Ok((app, printer_model, exit_tasks, setup_env, shell_command))

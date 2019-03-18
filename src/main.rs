@@ -7,7 +7,7 @@ mod state;
 mod util;
 
 use app::App;
-use io::{ExitCode, PreExitTasks, Printer, SetupEnv, ShellCommand};
+use io::{ExitCode, ExitTasks, Printer, SetupEnv, ShellCommand};
 
 fn main() {
     use setup::{setup, Opt};
@@ -34,7 +34,7 @@ fn main() {
 fn run_app(
     app: App,
     printer: Printer,
-    exit_tasks: PreExitTasks,
+    exit_tasks: ExitTasks,
     setup_env: SetupEnv,
     shell_command: ShellCommand,
 ) -> ExitCode {
