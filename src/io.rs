@@ -10,7 +10,7 @@ pub struct SetupEnv {
 }
 
 impl SetupEnv {
-    pub fn run(&self, item: Option<&String>, index: usize, actual_count: f64) {
+    pub fn run(&self, item: Option<String>, index: f64, actual_count: f64) {
         use std::env::set_var;
 
         // THESE ARE FLIPPED AND I CAN'T UNFLIP THEM.

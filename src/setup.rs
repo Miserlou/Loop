@@ -65,14 +65,13 @@ pub fn setup(
             .for_each(|line| items.push(line));
     }
 
-    let iterator = LoopIterator::new(opt.offset, opt.count_by, opt.num, &items);
+    let iterator = LoopIterator::new(opt.offset, opt.count_by, opt.num, items);
     let loop_model = opt.into_loop_model(program_start);
 
     let app = App {
         every,
         iterator,
         loop_model,
-        items,
     };
 
     Ok((app, printer_model, exit_tasks, setup_env, shell_command))

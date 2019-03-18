@@ -10,7 +10,6 @@ pub struct App {
     pub every: Duration,
     pub iterator: LoopIterator,
     pub loop_model: LoopModel,
-    pub items: Vec<String>,
 }
 
 impl App {
@@ -20,16 +19,15 @@ impl App {
         printer: &impl Fn(&str, State) -> State,
         command: &impl Fn(State) -> (ExitCode, State),
         exit_tasks: &impl Fn(Summary, File),
-        setup_environment: &impl Fn(Option<&String>, usize, f64),
+        setup_environment: &impl Fn(Option<String>, f64, f64),
     ) -> ExitCode {
-        let mut state = State::default();
         let loop_model = self.loop_model;
+        let mut state = State::default();
 
-        for (i, actual_count) in self.iterator.enumerate() {
+        for it in self.iterator {
             let step_start_time = Instant::now();
-            let item = self.items.get(i);
 
-            let setup_envs = || setup_environment(item, i, actual_count);
+            let setup_envs = || setup_environment(it.item.clone(), it.index, it.actual_count);
 
             let (break_loop, new_state) = loop_model.step(state, setup_envs, command, printer);
             state = new_state;

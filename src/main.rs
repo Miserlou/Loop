@@ -49,7 +49,7 @@ fn run_app(
     let exit_tasks = |summary: Summary, tmpfile: File| {
         exit_tasks.run(summary, tmpfile);
     };
-    let setup_environment = |item: Option<&String>, index: usize, actual_count: f64| {
+    let setup_environment = |item: Option<String>, index: f64, actual_count: f64| {
         setup_env.run(item, index, actual_count)
     };
 
