@@ -1,7 +1,5 @@
 use crate::loop_step::{Env, ResultPrinter, ShellCommand};
-use crate::state::{State, Summary};
-
-use std::fs::File;
+use crate::state::State;
 
 use regex::Regex;
 use subprocess::{Exec, ExitStatus, Redirection};
@@ -80,20 +78,6 @@ impl ResultPrinter for RealResultPrinter {
         });
 
         state
-    }
-}
-
-pub fn pre_exit_tasks(only_last: bool, print_summary: bool, summary: Summary, mut tmpfile: File) {
-    use crate::util::StringFromTempfileStart;
-
-    if only_last {
-        String::from_temp_start(&mut tmpfile)
-            .lines()
-            .for_each(|line| println!("{}", line));
-    }
-
-    if print_summary {
-        summary.print()
     }
 }
 

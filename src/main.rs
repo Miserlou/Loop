@@ -1,13 +1,12 @@
+mod app;
 mod io;
 mod loop_iterator;
 mod loop_step;
-mod run;
 mod setup;
 mod state;
 mod util;
 
 fn main() {
-    use run::run;
     use setup::{setup, Opt};
     use std::process;
     use structopt::StructOpt;
@@ -15,7 +14,7 @@ fn main() {
     let app = setup(Opt::from_args());
 
     let exit_code = match app {
-        Ok(app) => run(app),
+        Ok(app) => app.run(),
         Err(err) => {
             if !err.message.is_empty() {
                 eprintln!("{}", err.message);

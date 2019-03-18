@@ -1,3 +1,4 @@
+use crate::app::App;
 use crate::io::{ExitCode, RealEnv, RealResultPrinter, RealShellCommand};
 use crate::loop_iterator::LoopIterator;
 use crate::loop_step::LoopModel;
@@ -7,20 +8,6 @@ use std::time::{Duration, Instant, SystemTime};
 use humantime::{parse_duration, parse_rfc3339_weak};
 use regex::Regex;
 use structopt::StructOpt;
-
-#[derive(Debug)]
-pub struct App {
-    pub count_precision: usize,
-    pub opt_only_last: bool,
-    pub opt_summary: bool,
-
-    pub env: RealEnv,
-    pub shell_command: RealShellCommand,
-    pub result_printer: RealResultPrinter,
-
-    pub iterator: LoopIterator,
-    pub loop_model: LoopModel,
-}
 
 pub fn setup(mut opt: Opt) -> Result<App, AppError> {
     use std::io::{self, BufRead};
