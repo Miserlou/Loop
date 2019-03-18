@@ -3,7 +3,7 @@ use crate::loop_iterator::LoopIterator;
 use crate::loop_step::LoopModel;
 use crate::state::{State, Summary};
 
-use std::fs::File;
+use std::io::Cursor;
 use std::time::{Duration, Instant};
 
 pub struct App {
@@ -16,11 +16,11 @@ impl App {
     #[must_use]
     pub fn run(
         self,
-        print: &impl Fn(&str, State) -> State,
-        command: &impl Fn(State) -> (ExitCode, State),
-        exit_tasks: &impl Fn(Summary, File),
+        print: &impl Fn(&str, &mut State),
+        command: &impl Fn(&mut State) -> ExitCode,
+        exit_tasks: &impl Fn(&Summary, &mut Cursor<Vec<u8>>),
         setup_environment: &impl Fn(Option<String>, f64, f64),
-    ) -> ExitCode {
+    ) -> State {
         let m = self.loop_model;
         let mut state = State::default();
 
@@ -46,17 +46,18 @@ impl App {
             }
         }
 
-        exit_tasks(state.summary, state.tmpfile);
+        exit_tasks(&state.summary, &mut state.buf);
 
-        state.exit_code
+        state
     }
 }
 
 #[test]
 fn test_run() {
     use std::cell::RefCell;
+    use std::io::{Cursor, Write};
 
-    // test that the print closure is called twice
+    // test that loop step method is called twice
     let expected_loop_count = 2;
     let counter = RefCell::new(0);
 
@@ -72,16 +73,19 @@ fn test_run() {
         loop_model: LoopModel::default(),
     };
 
-    let exit_code = app.run(
-        &|_stdout: &str, state: State| -> State {
+    let mut state = app.run(
+        &|_stdout: &str, _state: &mut State| {
             let mut my_ref = counter.borrow_mut();
             *my_ref += 1;
-            state
         },
-        &|state: State| (ExitCode::Okay, state),
-        &|_summary: Summary, _tmpfile: File| {},
+        &|state: &mut State| {
+            writeln!(state.buf, "123").unwrap();
+            ExitCode::Okay
+        },
+        &|_summary: &Summary, _buf: &mut Cursor<Vec<u8>>| {},
         &|_item: Option<String>, _index: f64, _count: f64| {},
     );
-    assert_eq!(ExitCode::Okay, exit_code);
+    assert_eq!(ExitCode::Okay, state.exit_code);
     assert_eq!(expected_loop_count, *counter.borrow());
+    assert_eq!("123\n123\n", state.buffer_to_string());
 }

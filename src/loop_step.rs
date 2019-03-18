@@ -1,6 +1,5 @@
 use crate::io::ExitCode;
 use crate::state::State;
-use crate::util::StringFromTempfileStart;
 
 use std::time::{Duration, Instant, SystemTime};
 
@@ -23,8 +22,8 @@ impl LoopModel {
         &self,
         mut state: State,
         setup_environment: impl FnOnce(),
-        shell_command: impl Fn(State) -> (ExitCode, State),
-        result_printer: impl Fn(&str, State) -> State,
+        shell_command: impl Fn(&mut State) -> ExitCode,
+        printer: impl Fn(&str, &mut State),
     ) -> (bool, State) {
         // Set counters before execution
         setup_environment();
@@ -50,13 +49,13 @@ impl LoopModel {
         }
 
         // Main executor
-        let (new_state, exit_code, stdout) = run_command(
+        let (new_state, exit_code, cmd_output) = run_command(
             state,
             self.until_error,
             self.until_success,
             self.until_fail,
             shell_command,
-            result_printer,
+            printer,
         );
         state = new_state;
 
@@ -71,34 +70,34 @@ impl LoopModel {
 
         if let Some(ref previous_stdout) = state.previous_stdout {
             // --until-changes
-            if self.until_changes && *previous_stdout != stdout {
+            if self.until_changes && *previous_stdout != cmd_output {
                 return (true, state);
             }
 
             // --until-same
-            if self.until_same && *previous_stdout == stdout {
+            if self.until_same && *previous_stdout == cmd_output {
                 return (true, state);
             }
         }
-        state.previous_stdout = Some(stdout);
+        state.previous_stdout = Some(cmd_output);
 
         (false, state)
     }
 }
 
 fn run_command(
-    state: State,
+    mut state: State,
     until_error: Option<ExitCode>,
     until_success: bool,
     until_fail: bool,
-    shell_command: impl Fn(State) -> (ExitCode, State),
-    result_printer: impl Fn(&str, State) -> State,
+    shell_command: impl Fn(&mut State) -> ExitCode,
+    printer: impl Fn(&str, &mut State),
 ) -> (State, ExitCode, String) {
-    let (exit_code, mut state) = shell_command(state);
+    let exit_code = shell_command(&mut state);
 
     // Print the results
-    let stdout = String::from_temp_start(&mut state.tmpfile);
-    state = result_printer(&stdout, state);
+    let cmd_output = state.buffer_to_string();
+    printer(&cmd_output, &mut state);
 
     // --until-error
     state.has_matched = check_until_error(until_error, exit_code);
@@ -109,7 +108,7 @@ fn run_command(
     // --until-fail
     state.has_matched = until_fail && !exit_code.success();
 
-    (state, exit_code, stdout)
+    (state, exit_code, cmd_output)
 }
 
 /// Check `exit_code` if --until-error flag is set.

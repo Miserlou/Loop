@@ -1,20 +1,33 @@
 use crate::io::ExitCode;
 
-use std::fs::File;
+use std::io::Cursor;
 
 pub struct State {
-    pub tmpfile: File,
+    /// shell command in-memory output buffer
+    pub buf: Cursor<Vec<u8>>,
     pub summary: Summary,
     pub exit_code: ExitCode,
     pub previous_stdout: Option<String>,
     pub has_matched: bool,
 }
 
+impl State {
+    pub fn buffer_to_string(&mut self) -> String {
+        use std::io::SeekFrom;
+        use std::io::{Read, Seek};
+
+        let mut output = String::new();
+        self.buf.seek(SeekFrom::Start(0)).ok();
+        self.buf.read_to_string(&mut output).ok();
+        output
+    }
+}
+
 impl Default for State {
     fn default() -> State {
         State {
             has_matched: false,
-            tmpfile: tempfile::tempfile().unwrap(),
+            buf: Cursor::new(vec![]),
             summary: Summary::default(),
             previous_stdout: None,
             exit_code: ExitCode::Okay,
@@ -35,7 +48,7 @@ impl Summary {
         }
     }
 
-    pub fn print(self) {
+    pub fn print(&self) {
         let total = self.successes + self.failures.len() as u32;
 
         let errors = if self.failures.is_empty() {
@@ -45,7 +58,7 @@ impl Summary {
                 "{} ({})",
                 self.failures.len(),
                 self.failures
-                    .into_iter()
+                    .iter()
                     .map(|f| f.to_string())
                     .collect::<Vec<_>>()
                     .join(", ")

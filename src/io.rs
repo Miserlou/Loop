@@ -1,6 +1,6 @@
 use crate::state::{State, Summary};
 
-use std::fs::File;
+use std::io::{Read, Seek};
 
 use regex::Regex;
 use subprocess::{Exec, ExitStatus, Redirection};
@@ -13,7 +13,7 @@ pub struct Printer {
 
 impl Printer {
     #[must_use]
-    pub fn print(&self, stdout: &str, mut state: State) -> State {
+    pub fn print(&self, stdout: &str, state: &mut State) {
         stdout.lines().for_each(|line| {
             // --only-last
             // If we only want output from the last execution,
@@ -32,9 +32,7 @@ impl Printer {
             if let Some(ref regex) = self.until_match {
                 state.has_matched = regex.captures(&line).is_some();
             }
-        });
-
-        state
+        })
     }
 }
 
@@ -44,20 +42,21 @@ pub struct ShellCommand {
 
 impl ShellCommand {
     #[must_use]
-    pub fn run(&self, mut state: State) -> (ExitCode, State) {
-        use std::io::{prelude::*, SeekFrom};
+    pub fn run(&self, state: &mut State) -> ExitCode {
+        use std::io::{SeekFrom, Write};
 
-        state.tmpfile.seek(SeekFrom::Start(0)).ok();
-        state.tmpfile.set_len(0).ok();
+        state.buf.seek(SeekFrom::Start(0)).ok();
+        state.buf.set_position(0_u64);
 
-        let exit_status = Exec::shell(&self.cmd_with_args)
-            .stdout(Redirection::File(state.tmpfile.try_clone().unwrap()))
+        let captured_data = Exec::shell(&self.cmd_with_args)
+            .stdout(Redirection::Pipe)
             .stderr(Redirection::Merge)
             .capture()
-            .unwrap()
-            .exit_status;
+            .unwrap();
 
-        (exit_status.into(), state)
+        state.buf.write_all(captured_data.stdout.as_ref()).unwrap();
+
+        captured_data.exit_status.into()
     }
 }
 
@@ -67,13 +66,18 @@ pub struct ExitTasks {
 }
 
 impl ExitTasks {
-    pub fn run(&self, summary: Summary, mut tmpfile: File) {
-        use crate::util::StringFromTempfileStart;
+    pub fn run<F>(&self, summary: &Summary, buf: &mut F)
+    where
+        F: Seek + Read,
+    {
+        use std::io::SeekFrom;
 
         if self.only_last {
-            String::from_temp_start(&mut tmpfile)
-                .lines()
-                .for_each(|line| println!("{}", line));
+            let mut output = String::new();
+            buf.seek(SeekFrom::Start(0)).ok();
+            buf.read_to_string(&mut output).ok();
+
+            output.lines().for_each(|line| println!("{}", line));
         }
 
         if self.summary {

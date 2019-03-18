@@ -18,7 +18,6 @@ humantime = "1.2.0"
 atty = "0.2.11"
 regex = "1.1.2"
 subprocess = "0.1.18"
-tempfile = "3.0.7"
 
 [[bin]]
 name = "loop"

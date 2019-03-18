@@ -4,7 +4,6 @@ mod loop_iterator;
 mod loop_step;
 mod setup;
 mod state;
-mod util;
 
 use app::App;
 use io::{ExitCode, ExitTasks, Printer, SetupEnv, ShellCommand};
@@ -36,18 +35,19 @@ fn run_app(
     shell_command: ShellCommand,
 ) -> ExitCode {
     use crate::state::{State, Summary};
-    use std::fs::File;
+    use std::io::Cursor;
 
-    let command = &|state: State| -> (ExitCode, State) { shell_command.run(state) };
+    let command = &|state: &mut State| -> ExitCode { shell_command.run(state) };
 
-    let printer = &|stdout: &str, state: State| -> State { printer.print(stdout, state) };
+    let printer = &|stdout: &str, state: &mut State| printer.print(stdout, state);
 
-    let exit_tasks = &|summary: Summary, tmpfile: File| {
-        exit_tasks.run(summary, tmpfile);
+    let exit_tasks = &|summary: &Summary, buf: &mut Cursor<Vec<u8>>| {
+        exit_tasks.run(summary, buf);
     };
     let setup_environment = &|item: Option<String>, actual_count: f64, count: f64| {
         setup_env.run(item, actual_count, count)
     };
 
     app.run(printer, command, exit_tasks, setup_environment)
+        .exit_code
 }
