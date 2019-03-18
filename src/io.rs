@@ -5,39 +5,49 @@ use std::fs::File;
 use regex::Regex;
 use subprocess::{Exec, ExitStatus, Redirection};
 
-pub fn setup_environment(
-    item: Option<&String>,
-    index: usize,
-    count_precision: usize,
-    actual_count: f64,
-) {
-    use std::env::set_var;
+pub struct SetupEnv {
+    pub count_precision: usize,
+}
 
-    // THESE ARE FLIPPED AND I CAN'T UNFLIP THEM.
-    set_var("ACTUALCOUNT", index.to_string());
-    set_var("COUNT", format!("{:.*}", count_precision, actual_count));
+impl SetupEnv {
+    pub fn run(&self, item: Option<&String>, index: usize, actual_count: f64) {
+        use std::env::set_var;
 
-    // Set current item as environment variable
-    if let Some(item) = item {
-        set_var("ITEM", item);
+        // THESE ARE FLIPPED AND I CAN'T UNFLIP THEM.
+        set_var("ACTUALCOUNT", index.to_string());
+        set_var(
+            "COUNT",
+            format!("{:.*}", self.count_precision, actual_count),
+        );
+
+        // Set current item as environment variable
+        if let Some(item) = item {
+            set_var("ITEM", item);
+        }
     }
 }
 
-#[must_use]
-pub fn shell_command(cmd_with_args: &str, mut state: State) -> (ExitCode, State) {
-    use std::io::{prelude::*, SeekFrom};
+pub struct ShellCommand {
+    pub cmd_with_args: String,
+}
 
-    state.tmpfile.seek(SeekFrom::Start(0)).ok();
-    state.tmpfile.set_len(0).ok();
+impl ShellCommand {
+    #[must_use]
+    pub fn run(&self, mut state: State) -> (ExitCode, State) {
+        use std::io::{prelude::*, SeekFrom};
 
-    let exit_status = Exec::shell(cmd_with_args)
-        .stdout(Redirection::File(state.tmpfile.try_clone().unwrap()))
-        .stderr(Redirection::Merge)
-        .capture()
-        .unwrap()
-        .exit_status;
+        state.tmpfile.seek(SeekFrom::Start(0)).ok();
+        state.tmpfile.set_len(0).ok();
 
-    (exit_status.into(), state)
+        let exit_status = Exec::shell(&self.cmd_with_args)
+            .stdout(Redirection::File(state.tmpfile.try_clone().unwrap()))
+            .stderr(Redirection::Merge)
+            .capture()
+            .unwrap()
+            .exit_status;
+
+        (exit_status.into(), state)
+    }
 }
 
 pub struct Printer {

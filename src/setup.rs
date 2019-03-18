@@ -1,5 +1,5 @@
 use crate::app::App;
-use crate::io::{ExitCode, PreExitTasks, Printer};
+use crate::io::{ExitCode, PreExitTasks, Printer, SetupEnv, ShellCommand};
 use crate::loop_iterator::LoopIterator;
 use crate::loop_step::LoopModel;
 
@@ -9,7 +9,9 @@ use humantime::{parse_duration, parse_rfc3339_weak};
 use regex::Regex;
 use structopt::StructOpt;
 
-pub fn setup(mut opt: Opt) -> Result<(App, Printer, PreExitTasks), AppError> {
+pub fn setup(
+    mut opt: Opt,
+) -> Result<(App, Printer, PreExitTasks, SetupEnv, ShellCommand), AppError> {
     use std::io::{self, BufRead};
     use std::mem;
 
@@ -43,6 +45,10 @@ pub fn setup(mut opt: Opt) -> Result<(App, Printer, PreExitTasks), AppError> {
         opt_summary: opt.summary,
     };
 
+    let setup_env = SetupEnv { count_precision };
+
+    let shell_command = ShellCommand { cmd_with_args };
+
     // Number of iterations
     let mut items: Vec<String> = vec![];
     if let Some(ref mut v) = opt.ffor {
@@ -62,18 +68,14 @@ pub fn setup(mut opt: Opt) -> Result<(App, Printer, PreExitTasks), AppError> {
     let iterator = LoopIterator::new(opt.offset, opt.count_by, opt.num, &items);
     let loop_model = opt.into_loop_model(program_start);
 
-    Ok((
-        App {
-            count_precision,
-            cmd_with_args,
-            every,
-            iterator,
-            loop_model,
-            items,
-        },
-        printer_model,
-        exit_tasks,
-    ))
+    let app = App {
+        every,
+        iterator,
+        loop_model,
+        items,
+    };
+
+    Ok((app, printer_model, exit_tasks, setup_env, shell_command))
 }
 
 #[derive(Debug, PartialEq, Clone)]
