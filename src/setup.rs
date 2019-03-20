@@ -10,27 +10,16 @@ use regex::Regex;
 use structopt::StructOpt;
 
 pub fn setup(mut opt: Opt) -> Result<(App, Printer, ExitTasks, SetupEnv, ShellCommand), AppError> {
-    use std::io::{self, BufRead};
-    use std::mem;
-
     // Time
     let program_start = Instant::now();
-
-    let count_precision = Opt::clap()
-        .get_matches()
-        .value_of("count_by")
-        .map(precision_of)
-        .unwrap_or(0);
-
     let cmd_with_args = opt.input.join(" ");
+
     if cmd_with_args.is_empty() {
         return Err(AppError::new(
             ExitCode::MinorError,
             "No command supplied, exiting.",
         ));
     }
-
-    let every = opt.every;
 
     let printer_model = Printer {
         only_last: opt.only_last,
@@ -39,37 +28,24 @@ pub fn setup(mut opt: Opt) -> Result<(App, Printer, ExitTasks, SetupEnv, ShellCo
     };
 
     let exit_tasks = ExitTasks {
-        opt_only_last: opt.only_last,
-        opt_summary: opt.summary,
+        only_last: opt.only_last,
+        summary: opt.summary,
     };
 
-    let setup_env = SetupEnv { count_precision };
+    let setup_env = SetupEnv {
+        count_precision: Opt::clap()
+            .get_matches()
+            .value_of("count_by")
+            .map(precision_of)
+            .unwrap_or(0),
+    };
 
     let shell_command = ShellCommand { cmd_with_args };
 
-    // Number of iterations
-    let mut items: Vec<String> = vec![];
-    if let Some(ref mut v) = opt.ffor {
-        mem::swap(&mut items, v);
-        opt.ffor = None;
-    }
-
-    // Get any lines from stdin
-    if opt.stdin || atty::isnt(atty::Stream::Stdin) {
-        io::stdin()
-            .lock()
-            .lines()
-            .map(|line| line.unwrap().to_owned())
-            .for_each(|line| items.push(line));
-    }
-
-    let iterator = LoopIterator::new(opt.offset, opt.count_by, opt.num, items);
-    let loop_model = opt.into_loop_model(program_start);
-
     let app = App {
-        every,
-        loop_model,
-        iterator,
+        every: opt.every,
+        iterator: LoopIterator::from(&mut opt),
+        loop_model: LoopModel::from_opt(opt, program_start),
     };
 
     Ok((app, printer_model, exit_tasks, setup_env, shell_command))
@@ -105,8 +81,8 @@ fn precision_of(s: &str) -> usize {
 
 fn get_exit_code(input: &str) -> ExitCode {
     input
-        .parse()
-        .map(ExitCode::Other)
+        .parse::<u32>()
+        .map(ExitCode::from)
         .unwrap_or_else(|_| ExitCode::Error)
 }
 
@@ -140,13 +116,8 @@ pub struct Opt {
     offset: f64,
 
     /// How often to iterate. ex., 5s, 1h1m1s1ms1us
-    #[structopt(
-        short = "e",
-        long = "every",
-        default_value = "1us",
-        parse(try_from_str = "parse_duration")
-    )]
-    every: Duration,
+    #[structopt(short = "e", long = "every", parse(try_from_str = "parse_duration"))]
+    every: Option<Duration>,
 
     /// A comma-separated list of values, placed into 4ITEM. ex., red,green,blue
     #[structopt(long = "for", parse(from_str = "get_values"))]
@@ -217,30 +188,13 @@ pub struct Opt {
     input: Vec<String>,
 }
 
-impl Opt {
-    fn into_loop_model(self, program_start: Instant) -> LoopModel {
-        LoopModel {
-            program_start,
-            for_duration: self.for_duration,
-            error_duration: self.error_duration,
-            until_time: self.until_time,
-            until_error: self.until_error,
-            until_success: self.until_success,
-            until_fail: self.until_fail,
-            summary: self.summary,
-            until_changes: self.until_changes,
-            until_same: self.until_same,
-        }
-    }
-}
-
 impl Default for Opt {
     fn default() -> Opt {
         Opt {
             num: None,
             count_by: 1_f64,
             offset: 0_f64,
-            every: parse_duration("1us").unwrap(),
+            every: None,
             ffor: None,
             for_duration: None,
             until_contains: None,
@@ -260,6 +214,49 @@ impl Default for Opt {
     }
 }
 
+impl From<&mut Opt> for LoopIterator {
+    fn from(opt: &mut Opt) -> LoopIterator {
+        use std::io::{self, BufRead};
+        use std::mem;
+
+        // Number of iterations
+        let mut items: Vec<String> = vec![];
+
+        if let Some(ref mut v) = opt.ffor {
+            mem::swap(&mut items, v);
+            opt.ffor = None;
+        }
+
+        // Get any lines from stdin
+        if opt.stdin || atty::isnt(atty::Stream::Stdin) {
+            io::stdin()
+                .lock()
+                .lines()
+                .map(|line| line.unwrap().to_owned())
+                .for_each(|line| items.push(line));
+        }
+
+        LoopIterator::new(opt.offset, opt.count_by, opt.num, items)
+    }
+}
+
+impl LoopModel {
+    fn from_opt(opt: Opt, program_start: Instant) -> LoopModel {
+        LoopModel {
+            program_start,
+            for_duration: opt.for_duration,
+            error_duration: opt.error_duration,
+            until_time: opt.until_time,
+            until_error: opt.until_error,
+            until_success: opt.until_success,
+            until_fail: opt.until_fail,
+            summary: opt.summary,
+            until_changes: opt.until_changes,
+            until_same: opt.until_same,
+        }
+    }
+}
+
 #[test]
 fn test_setup() {
     // okay
@@ -274,4 +271,12 @@ fn test_setup() {
         Err(err) => assert_eq!(err, app_error),
         _ => panic!(),
     }
+}
+
+#[test]
+fn test_get_exit_code() {
+    assert_eq!(ExitCode::Okay, get_exit_code("0"));
+    assert_eq!(ExitCode::Error, get_exit_code(""));
+    assert_eq!(ExitCode::Timeout, get_exit_code("124"));
+    assert_eq!(ExitCode::Other(50), get_exit_code("50"));
 }

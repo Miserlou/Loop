@@ -62,21 +62,21 @@ impl ShellCommand {
 }
 
 pub struct ExitTasks {
-    pub opt_only_last: bool,
-    pub opt_summary: bool,
+    pub only_last: bool,
+    pub summary: bool,
 }
 
 impl ExitTasks {
     pub fn run(&self, summary: Summary, mut tmpfile: File) {
         use crate::util::StringFromTempfileStart;
 
-        if self.opt_only_last {
+        if self.only_last {
             String::from_temp_start(&mut tmpfile)
                 .lines()
                 .for_each(|line| println!("{}", line));
         }
 
-        if self.opt_summary {
+        if self.summary {
             summary.print()
         }
     }
@@ -87,15 +87,12 @@ pub struct SetupEnv {
 }
 
 impl SetupEnv {
-    pub fn run(&self, item: Option<String>, index: f64, actual_count: f64) {
+    pub fn run(&self, item: Option<String>, index: f64, count: f64) {
         use std::env::set_var;
 
         // THESE ARE FLIPPED AND I CAN'T UNFLIP THEM.
         set_var("ACTUALCOUNT", index.to_string());
-        set_var(
-            "COUNT",
-            format!("{:.*}", self.count_precision, actual_count),
-        );
+        set_var("COUNT", format!("{:.*}", self.count_precision, count));
 
         // Set current item as environment variable
         if let Some(item) = item {
@@ -108,6 +105,7 @@ impl SetupEnv {
 pub enum ExitCode {
     Okay,
     Error,
+    /// e.g. when no argument is passed to loop-rs (2)
     MinorError,
     /// same exit-code as used by the `timeout` shell command (124)
     Timeout,
@@ -132,12 +130,6 @@ impl From<u32> for ExitCode {
             124 => ExitCode::Timeout,
             code => ExitCode::Other(code),
         }
-    }
-}
-
-impl From<i32> for ExitCode {
-    fn from(n: i32) -> ExitCode {
-        ExitCode::from(n as u32)
     }
 }
 

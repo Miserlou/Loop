@@ -22,7 +22,7 @@ impl LoopModel {
     pub fn step(
         &self,
         mut state: State,
-        setup_environment: impl Fn(),
+        setup_environment: impl FnOnce(),
         shell_command: impl Fn(State) -> (ExitCode, State),
         result_printer: impl Fn(&str, State) -> State,
     ) -> (bool, State) {
@@ -101,7 +101,7 @@ fn run_command(
     state = result_printer(&stdout, state);
 
     // --until-error
-    until_error_check(&mut state.has_matched, until_error, exit_code);
+    state.has_matched = check_until_error(until_error, exit_code);
 
     // --until-success
     state.has_matched = until_success && exit_code.success();
@@ -112,14 +112,12 @@ fn run_command(
     (state, exit_code, stdout)
 }
 
-/// Check if the exit-code is non-zero, or the given exit-code.
-fn until_error_check(has_matched: &mut bool, to_check: Option<ExitCode>, exit_code: ExitCode) {
-    match to_check {
-        Some(ExitCode::Error) => *has_matched = !exit_code.success(),
-        Some(expected_exit_code) => {
-            *has_matched = expected_exit_code == exit_code;
-        }
-        _ => (),
+/// Check `exit_code` if --until-error flag is set.
+fn check_until_error(should_check: Option<ExitCode>, exit_code: ExitCode) -> bool {
+    match should_check {
+        Some(ExitCode::Other(expected)) => expected == exit_code.into(),
+        Some(_) => !exit_code.success(),
+        _ => false,
     }
 }
 
@@ -140,4 +138,23 @@ impl Default for LoopModel {
             program_start: Instant::now(),
         }
     }
+}
+
+#[test]
+fn test_check_until_error() {
+    // check generic error
+    let has_matched = check_until_error(Some(ExitCode::Error), ExitCode::MinorError);
+    assert!(has_matched);
+
+    // check specific error-code
+    let has_matched = check_until_error(Some(ExitCode::Other(99)), ExitCode::Other(99));
+    assert!(has_matched);
+
+    // check specific error-code, no match
+    let has_matched = check_until_error(Some(ExitCode::Other(20)), ExitCode::Other(99));
+    assert!(!has_matched);
+
+    // --until-error flag not set
+    let has_matched = check_until_error(None, ExitCode::Okay);
+    assert!(!has_matched);
 }
