@@ -1,9 +1,9 @@
 use crate::io::ExitCode;
+use crate::io::Printer;
 use crate::loop_iterator::LoopIterator;
 use crate::loop_step::LoopModel;
-use crate::state::{State, Summary};
+use crate::state::State;
 
-use std::io::Cursor;
 use std::time::{Duration, Instant};
 
 pub struct App {
@@ -16,10 +16,9 @@ impl App {
     #[must_use]
     pub fn run(
         self,
-        print: &impl Fn(&str, &mut State),
-        command: &impl Fn(&mut State) -> ExitCode,
-        exit_tasks: &impl Fn(&Summary, &mut Cursor<Vec<u8>>),
         setup_environment: &impl Fn(Option<String>, f64, f64),
+        command: &impl Fn() -> (String, ExitCode),
+        mut printer: Printer,
     ) -> State {
         let m = self.loop_model;
         let mut state = State::default();
@@ -27,39 +26,42 @@ impl App {
         for it in self.iterator {
             let step_start_time = Instant::now();
 
+            let is_last = it.is_last;
+
             let setup_envs = || setup_environment(it.item, it.actual_count, it.count);
 
-            let (break_loop, new_state) = m.step(state, setup_envs, command, print);
+            let (break_loop, new_state) = m.step(state, setup_envs, command, &mut printer);
             state = new_state;
 
             if break_loop {
                 break;
             }
 
-            // Delay until next iteration time
-            if let Some(every) = self.every {
-                let since = Instant::now().duration_since(step_start_time);
+            if is_last {
+                printer.terminatory_print(|| state.to_string());
+            } else {
+                // Delay until next iteration time
+                if let Some(every) = self.every {
+                    let since = Instant::now().duration_since(step_start_time);
 
-                if let Some(time) = every.checked_sub(since) {
-                    std::thread::sleep(time);
+                    if let Some(time) = every.checked_sub(since) {
+                        std::thread::sleep(time);
+                    }
                 }
             }
         }
-
-        exit_tasks(&state.summary, &mut state.buf);
 
         state
     }
 }
 
 #[test]
-fn test_run() {
+#[allow(non_snake_case)]
+fn run__num() {
     use std::cell::RefCell;
-    use std::io::{Cursor, Write};
 
-    // test that loop step method is called twice
+    // test that loop step method is called twice, flag: --num 2
     let expected_loop_count = 2;
-    let counter = RefCell::new(0);
 
     let app = App {
         every: None,
@@ -73,19 +75,23 @@ fn test_run() {
         loop_model: LoopModel::default(),
     };
 
-    let mut state = app.run(
-        &|_stdout: &str, _state: &mut State| {
-            let mut my_ref = counter.borrow_mut();
-            *my_ref += 1;
+    let cmd_output = RefCell::new(vec![]);
+
+    let state = app.run(
+        &|_item, _index, _count| {},
+        &|| {
+            let mut buf = cmd_output.borrow_mut();
+            let output = match buf.len() {
+                0 => "123".to_owned(),
+                _ => "abc".to_owned(),
+            };
+            buf.push(output.clone());
+
+            (output, ExitCode::Okay)
         },
-        &|state: &mut State| {
-            writeln!(state.buf, "123").unwrap();
-            ExitCode::Okay
-        },
-        &|_summary: &Summary, _buf: &mut Cursor<Vec<u8>>| {},
-        &|_item: Option<String>, _index: f64, _count: f64| {},
+        Printer::default(),
     );
     assert_eq!(ExitCode::Okay, state.exit_code);
-    assert_eq!(expected_loop_count, *counter.borrow());
-    assert_eq!("123\n123\n", state.buffer_to_string());
+    assert_eq!(expected_loop_count, cmd_output.borrow().len());
+    assert_eq!(vec!["123", "abc"], cmd_output.into_inner());
 }

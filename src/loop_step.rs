@@ -1,4 +1,4 @@
-use crate::io::ExitCode;
+use crate::io::{ExitCode, Printer};
 use crate::state::State;
 
 use std::time::{Duration, Instant, SystemTime};
@@ -22,8 +22,8 @@ impl LoopModel {
         &self,
         mut state: State,
         setup_environment: impl FnOnce(),
-        shell_command: impl Fn(&mut State) -> ExitCode,
-        printer: impl Fn(&str, &mut State),
+        shell_command: impl Fn() -> (String, ExitCode),
+        printer: &mut Printer,
     ) -> (bool, State) {
         // Set counters before execution
         setup_environment();
@@ -60,7 +60,7 @@ impl LoopModel {
         state = new_state;
 
         if self.summary {
-            state.summary.update(exit_code);
+            state.update_summary(exit_code);
         }
 
         // Finish if we matched
@@ -90,14 +90,13 @@ fn run_command(
     until_error: Option<ExitCode>,
     until_success: bool,
     until_fail: bool,
-    shell_command: impl Fn(&mut State) -> ExitCode,
-    printer: impl Fn(&str, &mut State),
+    shell_command: impl Fn() -> (String, ExitCode),
+    printer: &mut Printer,
 ) -> (State, ExitCode, String) {
-    let exit_code = shell_command(&mut state);
+    let (cmd_output, exit_code) = shell_command();
 
     // Print the results
-    let cmd_output = state.buffer_to_string();
-    printer(&cmd_output, &mut state);
+    printer.print(&cmd_output, &mut state);
 
     // --until-error
     state.has_matched = check_until_error(until_error, exit_code);

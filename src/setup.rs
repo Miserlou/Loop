@@ -1,5 +1,5 @@
 use crate::app::App;
-use crate::io::{ExitCode, ExitTasks, Printer, SetupEnv, ShellCommand};
+use crate::io::{ExitCode, Printer, SetupEnv, ShellCommand};
 use crate::loop_iterator::LoopIterator;
 use crate::loop_step::LoopModel;
 
@@ -9,7 +9,7 @@ use humantime::{parse_duration, parse_rfc3339_weak};
 use regex::Regex;
 use structopt::StructOpt;
 
-pub fn setup(mut opt: Opt) -> Result<(App, Printer, ExitTasks, SetupEnv, ShellCommand), AppError> {
+pub fn setup(mut opt: Opt) -> Result<(App, SetupEnv, ShellCommand, Printer), AppError> {
     // Time
     let program_start = Instant::now();
     let cmd_with_args = opt.input.join(" ");
@@ -21,15 +21,12 @@ pub fn setup(mut opt: Opt) -> Result<(App, Printer, ExitTasks, SetupEnv, ShellCo
         ));
     }
 
-    let printer_model = Printer {
+    let printer = Printer {
         only_last: opt.only_last,
         until_contains: opt.until_contains.clone(),
         until_match: opt.until_match.clone(),
-    };
-
-    let exit_tasks = ExitTasks {
-        only_last: opt.only_last,
         summary: opt.summary,
+        last_output: String::new(),
     };
 
     let setup_env = SetupEnv {
@@ -48,7 +45,7 @@ pub fn setup(mut opt: Opt) -> Result<(App, Printer, ExitTasks, SetupEnv, ShellCo
         loop_model: LoopModel::from_opt(opt, program_start),
     };
 
-    Ok((app, printer_model, exit_tasks, setup_env, shell_command))
+    Ok((app, setup_env, shell_command, printer))
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -258,13 +255,17 @@ impl LoopModel {
 }
 
 #[test]
-fn test_setup() {
-    // okay
+#[allow(non_snake_case)]
+fn setup__okay() {
     let mut opt = Opt::default();
     opt.input = vec!["foobar".to_owned()];
     assert!(setup(opt).is_ok());
+}
 
-    // no command
+#[test]
+#[allow(non_snake_case)]
+fn setup__no_command() {
+    // no command supplied to loop-rs
     let opt = Opt::default();
     let app_error = AppError::new(ExitCode::MinorError, "No command supplied, exiting.");
     match setup(opt) {

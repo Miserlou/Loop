@@ -1,6 +1,6 @@
-use crate::state::{State, Summary};
+use crate::state::State;
 
-use std::io::{Read, Seek};
+use std::io::Write;
 
 use regex::Regex;
 use subprocess::{Exec, ExitStatus, Redirection};
@@ -9,12 +9,30 @@ pub struct Printer {
     pub only_last: bool,
     pub until_contains: Option<String>,
     pub until_match: Option<Regex>,
+    pub summary: bool,
+    pub last_output: String,
 }
 
 impl Printer {
-    #[must_use]
-    pub fn print(&self, stdout: &str, state: &mut State) {
-        stdout.lines().for_each(|line| {
+    pub fn terminatory_print(&self, create_summary: impl Fn() -> String) {
+        use std::io::stdout;
+
+        let handle = stdout();
+        let mut stdout = handle.lock();
+
+        if self.only_last {
+            writeln!(stdout, "{}", self.last_output).unwrap();
+        }
+
+        if self.summary {
+            stdout.write_all(create_summary().as_bytes()).unwrap();
+        }
+    }
+
+    pub fn print(&mut self, text: &str, state: &mut State) {
+        let mut last_line = String::default();
+
+        text.lines().for_each(|line| {
             // --only-last
             // If we only want output from the last execution,
             // defer printing until later
@@ -32,7 +50,28 @@ impl Printer {
             if let Some(ref regex) = self.until_match {
                 state.has_matched = regex.captures(&line).is_some();
             }
-        })
+
+            if self.only_last {
+                last_line = line.to_owned();
+            }
+        });
+
+        // maybe keep the last line for later
+        if self.only_last {
+            self.last_output = last_line;
+        }
+    }
+}
+
+impl Default for Printer {
+    fn default() -> Printer {
+        Printer {
+            only_last: false,
+            until_contains: None,
+            until_match: None,
+            summary: false,
+            last_output: String::new(),
+        }
     }
 }
 
@@ -42,47 +81,13 @@ pub struct ShellCommand {
 
 impl ShellCommand {
     #[must_use]
-    pub fn run(&self, state: &mut State) -> ExitCode {
-        use std::io::{SeekFrom, Write};
-
-        state.buf.seek(SeekFrom::Start(0)).ok();
-        state.buf.set_position(0_u64);
-
-        let captured_data = Exec::shell(&self.cmd_with_args)
+    pub fn run(&self) -> (String, ExitCode) {
+        Exec::shell(&self.cmd_with_args)
             .stdout(Redirection::Pipe)
             .stderr(Redirection::Merge)
             .capture()
-            .unwrap();
-
-        state.buf.write_all(captured_data.stdout.as_ref()).unwrap();
-
-        captured_data.exit_status.into()
-    }
-}
-
-pub struct ExitTasks {
-    pub only_last: bool,
-    pub summary: bool,
-}
-
-impl ExitTasks {
-    pub fn run<F>(&self, summary: &Summary, buf: &mut F)
-    where
-        F: Seek + Read,
-    {
-        use std::io::SeekFrom;
-
-        if self.only_last {
-            let mut output = String::new();
-            buf.seek(SeekFrom::Start(0)).ok();
-            buf.read_to_string(&mut output).ok();
-
-            output.lines().for_each(|line| println!("{}", line));
-        }
-
-        if self.summary {
-            summary.print()
-        }
+            .map(|it| (it.stdout_str(), it.exit_status.into()))
+            .unwrap()
     }
 }
 

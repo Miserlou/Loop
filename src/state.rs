@@ -1,54 +1,24 @@
 use crate::io::ExitCode;
 
-use std::io::Cursor;
-
 pub struct State {
-    /// shell command in-memory output buffer
-    pub buf: Cursor<Vec<u8>>,
-    pub summary: Summary,
-    pub exit_code: ExitCode,
-    pub previous_stdout: Option<String>,
     pub has_matched: bool,
+    pub previous_stdout: Option<String>,
+    pub successes: u32,
+    pub failures: Vec<u32>,
+    pub exit_code: ExitCode,
 }
 
 impl State {
-    pub fn buffer_to_string(&mut self) -> String {
-        use std::io::SeekFrom;
-        use std::io::{Read, Seek};
-
-        let mut output = String::new();
-        self.buf.seek(SeekFrom::Start(0)).ok();
-        self.buf.read_to_string(&mut output).ok();
-        output
-    }
-}
-
-impl Default for State {
-    fn default() -> State {
-        State {
-            has_matched: false,
-            buf: Cursor::new(vec![]),
-            summary: Summary::default(),
-            previous_stdout: None,
-            exit_code: ExitCode::Okay,
-        }
-    }
-}
-
-pub struct Summary {
-    successes: u32,
-    failures: Vec<u32>,
-}
-
-impl Summary {
-    pub fn update(&mut self, exit_code: ExitCode) {
+    pub fn update_summary(&mut self, exit_code: ExitCode) {
         match exit_code {
             ExitCode::Okay => self.successes += 1,
             err => self.failures.push(err.into()),
         }
     }
+}
 
-    pub fn print(&self) {
+impl ToString for State {
+    fn to_string(&self) -> String {
         let total = self.successes + self.failures.len() as u32;
 
         let errors = if self.failures.is_empty() {
@@ -64,18 +34,22 @@ impl Summary {
                     .join(", ")
             )
         };
-
-        println!("Total runs:\t{}", total);
-        println!("Successes:\t{}", self.successes);
-        println!("Failures:\t{}", errors);
+        let mut s = String::new();
+        s.push_str(&format!("Total runs:\t{}\n", total));
+        s.push_str(&format!("Successes:\t{}\n", self.successes));
+        s.push_str(&format!("Failures:\t{}\n", errors));
+        s
     }
 }
 
-impl Default for Summary {
-    fn default() -> Summary {
-        Summary {
+impl Default for State {
+    fn default() -> State {
+        State {
+            has_matched: false,
+            previous_stdout: None,
             successes: 0,
-            failures: Vec::new(),
+            failures: vec![],
+            exit_code: ExitCode::Okay,
         }
     }
 }
