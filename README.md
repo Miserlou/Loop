@@ -11,29 +11,29 @@ _"UNIX's missing `loop` command!"_
 Loops in bash are surprisingly complicated and fickle! I wanted a simple and intuitive way to write controllable loops that:
 
  * Run on controllable **timers**!
-   - `$ loop 'ls' --every 10s`
+   - `$ loop --every 10s -- ls`
 
  * Have **custom counters**!
-   - `$ loop 'touch $COUNT.txt' --count-by 5`
+   - `$ loop --count-by 5 -- touch $COUNT.txt`
 
  * Loop **until output matches** a condition!
    - `$ loop --until-contains 200 -- ./get_response_code.sh --site mysite.biz`
 
  * Loop **until a certain time**!
-   - `$ loop './poke_server' --for-duration 8h`
+   - `$ loop --for-duration 8h -- ./poke_server`
 
  * Loop **until a program succeeds** (or fails!)
-    - `$ loop './poke_server' --until-success`
+    - `$ loop --until-success -- ./poke_server`
 
  * Iterate over the **standard input**!
-    - `$ cat files_to_create.txt | loop 'touch $ITEM'`
+    - `$ cat files_to_create.txt | loop -- touch $ITEM`
 
  * Get a **summary** of the runs!
-    - `$ loop 'ls' --for-duration 10min --summary`
+    - `$ loop --for-duration 10min --summary -- ls`
 
  * Run until output **changes or stays the same** between invocations!
-   - `$ loop --until-changes date +%s`
-   - `$ loop --until-same date +%s`
+   - `$ loop --until-changes -- date +%s`
+   - `$ loop --until-same -- date +%s`
 
  * ..and **much more!**
 
@@ -125,7 +125,7 @@ You can also use double dashes ( ` -- ` ) to seperate arguments:
 
 `loop` places a counter value into the `$COUNT` environment variable.
 
-    $ loop 'echo $COUNT'
+    $ loop -- echo $COUNT
     0
     1
     2
@@ -133,7 +133,7 @@ You can also use double dashes ( ` -- ` ) to seperate arguments:
 
 The amount this counter increments can be changed with `--count-by`:
 
-    $ loop 'echo $COUNT' --count-by 2
+    $ loop --count-by 2 -- echo $COUNT
     0
     2
     4
@@ -142,7 +142,7 @@ The amount this counter increments can be changed with `--count-by`:
 
 The counter can be offset with `--offset`:
 
-    $ loop 'echo $COUNT' --count-by 2 --offset 10
+    $ loop --count-by 2 --offset 10 -- echo $COUNT
     10
     12
     14
@@ -150,7 +150,7 @@ The counter can be offset with `--offset`:
 
 And iterators can be floats!
 
-    $ loop 'echo $COUNT' --count-by 1.1
+    $ loop --count-by 1.1 -- 'echo $COUNT'
     0
     1.1
     2.2
@@ -158,7 +158,7 @@ And iterators can be floats!
 
 There's also an `$ACTUALCOUNT`:
 
-    $ loop 'echo $COUNT $ACTUALCOUNT' --count-by 2
+    $ loop --count-by 2 -- 'echo $COUNT $ACTUALCOUNT'
     0 0
     2 1
     4 2
@@ -166,7 +166,7 @@ There's also an `$ACTUALCOUNT`:
 
 You can get a summary of successes and failures (based on exit codes) with `--summary`:
 
-    $ loop 'echo $COUNT' --num 3 --summary
+    $ loop --num 3 --summary -- 'echo $COUNT' 
     0
     1
     2
@@ -176,7 +176,7 @@ You can get a summary of successes and failures (based on exit codes) with `--su
 
 or
 
-    $ loop 'ls -foobarbatz' --num 3 --summary
+    $ loop --num 3 --summary -- 'ls -foobarbatz'
     [ .. ]
     Total runs:  3
     Successes:   0
@@ -184,21 +184,21 @@ or
 
 If you only want the output of the last result, you can use `--only-last`:
 
-    $ loop 'echo $COUNT' --count-by 2 --num 50 --offset 2 --only-last # Counting is 0-indexed
+    $ loop --count-by 2 --num 50 --offset 2 --only-last -- 'echo $COUNT' # Counting is 0-indexed
     100
 
 ### Timed Loops
 
 Loops can be set to timers which accept [humanized times](https://github.com/tailhook/humantime) from the microsecond to the year with `--every`:
 
-    $ loop 'date' --every 5s
+    $ loop --every 5s -- date
     Thu May 17 10:51:03 EDT 2018
     Thu May 17 10:51:08 EDT 2018
     Thu May 17 10:51:13 EDT 2018
 
 Looping can be limited to a set duration with `--for-duration`:
 
-    $ loop 'date' --for-duration 8s --every 2s
+    $ loop --for-duration 8s --every 2s -- date
     Fri May 25 16:46:42 EDT 2018
     Fri May 25 16:46:44 EDT 2018
     Fri May 25 16:46:46 EDT 2018
@@ -207,7 +207,7 @@ Looping can be limited to a set duration with `--for-duration`:
 
 Or until a certain date/time with `--until-time`:
 
-    $ loop 'date -u' --until-time '2018-05-25 20:50:00' --every 5s
+    $ loop --until-time '2018-05-25 20:50:00' --every 5s -- 'date -u' 
     Fri May 25 20:49:49 UTC 2018
     Fri May 25 20:49:54 UTC 2018
     Fri May 25 20:49:59 UTC 2018
@@ -217,28 +217,28 @@ Or until a certain date/time with `--until-time`:
 
 `loop` can iterate until output contains a string with `--until-contains`:
 
-    $ loop 'echo $RANDOM' --until-contains "666"
+    $ loop --until-contains "666" -- 'echo $RANDOM'
     11235
     35925
     666
-    $ 
+    $
 
 `loop` can iterate until the output changes with `--until-changes`:
 
-    $ loop --only-last --every 1s --until-changes -- 'date +%s' 
+    $ loop --only-last --every 1s --until-changes -- 'date +%s'
     1548884135
     $
 
 `loop` can iterate until the output stays the same with `--until-same`. This would be useful, for instance,
 for monitoring with `du` until a download or copy finishes:
 
-    $ loop --every 1s --until-same -- 'du -bs .' 
+    $ loop --every 1s --until-same -- 'du -bs .'
     236861997       .
     $
 
 Or until a program succeeds with `--until-success`:
 
-    $ loop 'if (( RANDOM % 2 )); then (echo "TRUE"; true); else (echo "FALSE"; false); fi' --until-success
+    $ loop --until-success -- 'if (( RANDOM % 2 )); then (echo "TRUE"; true); else (echo "FALSE"; false); fi'
     FALSE
     FALSE
     TRUE
@@ -246,7 +246,7 @@ Or until a program succeeds with `--until-success`:
 
 Or until it fails with `--until-error` (which also accepts an optional error code):
 
-    $ loop 'if (( RANDOM % 2 )); then (echo "TRUE"; true); else (echo "FALSE"; false); fi' --until-error
+    $ loop --until-error -- 'if (( RANDOM % 2 )); then (echo "TRUE"; true); else (echo "FALSE"; false); fi'
     TRUE
     TRUE
     FALSE
@@ -254,25 +254,25 @@ Or until it fails with `--until-error` (which also accepts an optional error cod
 
 Or until it matches a regular expression with `--until-match`:
 
-    $ loop 'date' --until-match "(\d{4})"
+    $ loop --until-match "(\d{4})" -- `date`
     Thu May 17 10:51:03 EDT 2018
-    $ 
+    $
 
 ### Iterating Over Lists and Standard Inputs
 
 Loops can iterate over all sorts of lists with `--for`:
 
-    $ loop 'echo $ITEM' --for red,green,blue
+    $ loop --for red,green,blue -- 'echo $ITEM'
     red
     green
     blue
-    $ 
+    $
 
 And can read from the standard input via pipes:
 
-    $ cat /tmp/my-list-of-files-to-create.txt | loop 'touch $ITEM'
+    $ cat /tmp/my-list-of-files-to-create.txt | loop -- 'touch $ITEM'
     $ ls
-    hello.jpg 
+    hello.jpg
     goodbye.jpg
 
 This can be combined with various flags, such as `--until-changes`:
@@ -288,13 +288,13 @@ This can be combined with various flags, such as `--until-changes`:
 
 You can also easily pipe lists to `loop`:
 
-    $ ls -1 | loop 'cp $ITEM $ITEM.bak'; ls
+    $ ls -1 | loop -- 'cp $ITEM $ITEM.bak'; ls
     hello.jpg
     hello.jpg.bak
 
 ..or via the keyboard with `-i`:
 
-    $ loop 'echo $ITEM | tr a-z A-Z' -i
+    $ loop -- 'echo $ITEM | tr a-z A-Z' -i
     hello
     world^D
     HELLO
@@ -302,7 +302,7 @@ You can also easily pipe lists to `loop`:
 
 `--for` can accept all sorts of lists:
 
-    $ loop 'echo $ITEM' --for "`ls`"
+    $ loop --for "`ls`" -- 'echo $ITEM'
     Cargo.lock
     Cargo.toml
     README.md
@@ -318,27 +318,27 @@ Here are some handy things you can do with `loop`!
 
 If you have a lot of files and a program, but don't know which file is the one the program takes, you can loop over them until you find it:
 
-    $ ls  -1 | loop './my_program $ITEM' --until-success;
+    $ ls  -1 | loop --until-success -- './my_program $ITEM'; 
 
 Or, if you have a list of files but need to find the one which causes your program to fail:
 
-    $ ls  -1 | loop './my_program $ITEM' --until-fail;
+    $ ls  -1 | loop --until-fail -- './my_program $ITEM';
 
 ### Waiting for a website to appear online
 
 If you've just kicked off a website deployment pipeline, you might want to run a process when the site starts returning 200 response codes. With `--every` and `--until-contains`, you can do this without flooding the site with requests:
 
-    $ ./deploy.sh; loop 'curl -sw "%{http_code}" http://coolwebsite.biz' --every 5s --until-contains 200; ./announce_to_slack.sh
+    $ ./deploy.sh; loop  --every 5s --until-contains 200 -- 'curl -sw "%{http_code}" http://coolwebsite.biz'; ./announce_to_slack.sh
 
 Or until a host is online:
 
-    $ loop "ping -c 1 mysite.com" --until-success; ./do_next_thing
+    $ loop --until-success -- ping -c 1 mysite.com; ./do_next_thing
 
 ### Waiting for a file to be created
 
 If you have a long-running process that creates a new file, you might want to kick off another program when that process outputs a new file, like so:
 
-    $ ./create_big_file -o my_big_file.bin; loop 'ls' --until-contains 'my_big_file.bin'; ./upload_big_file my_big_file.bin
+    $ ./create_big_file -o my_big_file.bin; loop --until-contains 'my_big_file.bin' -- 'ls'; ./upload_big_file my_big_file.bin
 
 ### Create a backup for all files in a directory
 
@@ -346,7 +346,7 @@ If you've got a whole list of files that you want to create backup copies of, yo
 
     $ ls
     hello.jpg
-    $ ls -1 | loop 'cp $ITEM $ITEM.bak'
+    $ ls -1 | loop -- 'cp $ITEM $ITEM.bak'
     $ ls
     hello.jpg
     hello.jpg.bak
@@ -355,13 +355,13 @@ If you've got a whole list of files that you want to create backup copies of, yo
 
 _This is an [example from StackExchange](https://unix.stackexchange.com/questions/82598/how-do-i-write-a-retry-logic-in-script-to-keep-retrying-to-run-it-upto-5-times/)._
 
-> I want to write logic in shell script which will retry it to run again after 15 sec upto 5 times based on "status code=FAIL" if it fails due to some issue. 
+> I want to write logic in shell script which will retry it to run again after 15 sec upto 5 times based on "status code=FAIL" if it fails due to some issue.
 
-There are so many questions like this on StackExchange, which all end up with long threads of complicated answers. 
+There are so many questions like this on StackExchange, which all end up with long threads of complicated answers.
 
 With `loop`, it's a simple one liner:
 
-    loop './do_thing.sh' --every 15s --until-success --num 5 
+    loop --every 15s --until-success --num 5 -- './do_thing.sh'
 
 Which will do the thing every 15 seconds until it succeeds, for a maximum of five times.
 
@@ -371,7 +371,7 @@ If dealing with a command or script that occasionally fails in a CI environment,
 
 With `loop` you can do that with:
 
-    loop './do_thing.sh' --every 5s --until-success --for-duration 180s --duration-error
+    loop --every 5s --until-success --for-duration 180s --duration-error -- './do_thing.sh'
 
 Which will do the thing every 5 seconds until it succeeds or until the duration is met. If the duration is met, it will give the same non-zero return as the `timeout` command 124.
 
