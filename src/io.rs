@@ -5,6 +5,7 @@ use std::io::Write;
 use regex::Regex;
 use subprocess::{Exec, ExitStatus, Redirection};
 
+#[derive(Default)]
 pub struct Printer {
     pub only_last: bool,
     pub until_contains: Option<String>,
@@ -63,18 +64,6 @@ impl Printer {
     }
 }
 
-impl Default for Printer {
-    fn default() -> Printer {
-        Printer {
-            only_last: false,
-            until_contains: None,
-            until_match: None,
-            summary: false,
-            last_output: String::new(),
-        }
-    }
-}
-
 pub struct ShellCommand {
     pub cmd_with_args: String,
 }
@@ -126,6 +115,12 @@ pub enum ExitCode {
 impl ExitCode {
     pub fn success(self) -> bool {
         ExitCode::Okay == self
+    }
+}
+
+impl Default for ExitCode {
+    fn default() -> ExitCode {
+        ExitCode::Okay
     }
 }
 

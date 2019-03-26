@@ -1,5 +1,6 @@
 use crate::io::ExitCode;
 
+#[derive(Default)]
 pub struct State {
     pub has_matched: bool,
     pub previous_stdout: Option<String>,
@@ -39,17 +40,5 @@ impl ToString for State {
         s.push_str(&format!("Successes:\t{}\n", self.successes));
         s.push_str(&format!("Failures:\t{}\n", errors));
         s
-    }
-}
-
-impl Default for State {
-    fn default() -> State {
-        State {
-            has_matched: false,
-            previous_stdout: None,
-            successes: 0,
-            failures: vec![],
-            exit_code: ExitCode::Okay,
-        }
     }
 }
