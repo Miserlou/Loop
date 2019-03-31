@@ -7,7 +7,12 @@ pub struct LoopIterator {
 }
 
 impl LoopIterator {
-    pub fn new(offset: f64, count_by: f64, num: Option<f64>, items: Vec<String>) -> LoopIterator {
+    pub fn new(
+        offset: f64,
+        count_by: f64,
+        num: Option<f64>,
+        items: Vec<String>,
+    ) -> LoopIterator {
         let end = num.unwrap_or_else(|| {
             if items.is_empty() {
                 std::f64::INFINITY
@@ -50,10 +55,8 @@ impl Iterator for LoopIterator {
         self.index += 1.0;
 
         if self.index <= self.end {
-            let item = self
-                .items
-                .get(current_index as usize)
-                .map(ToString::to_string);
+            let item =
+                self.items.get(current_index as usize).map(ToString::to_string);
 
             let res = Item {
                 item,

@@ -9,7 +9,9 @@ use humantime::{parse_duration, parse_rfc3339_weak};
 use regex::Regex;
 use structopt::StructOpt;
 
-pub fn setup(mut opt: Opt) -> Result<(App, SetupEnv, ShellCommand, Printer), AppError> {
+pub fn setup(
+    mut opt: Opt,
+) -> Result<(App, SetupEnv, ShellCommand, Printer), AppError> {
     // Time
     let program_start = Instant::now();
     let cmd_with_args = opt.input.join(" ");
@@ -59,10 +61,7 @@ impl AppError {
     where
         M: Into<String>,
     {
-        AppError {
-            exit_code,
-            message: msg.into(),
-        }
+        AppError { exit_code, message: msg.into() }
     }
 }
 
@@ -77,10 +76,7 @@ fn precision_of(s: &str) -> usize {
 }
 
 fn get_exit_code(input: &str) -> ExitCode {
-    input
-        .parse::<u32>()
-        .map(ExitCode::from)
-        .unwrap_or_else(|_| ExitCode::Error)
+    input.parse::<u32>().map(ExitCode::from).unwrap_or_else(|_| ExitCode::Error)
 }
 
 fn get_values(input: &str) -> Vec<String> {
@@ -113,7 +109,11 @@ pub struct Opt {
     offset: f64,
 
     /// How often to iterate. ex., 5s, 1h1m1s1ms1us
-    #[structopt(short = "e", long = "every", parse(try_from_str = "parse_duration"))]
+    #[structopt(
+        short = "e",
+        long = "every",
+        parse(try_from_str = "parse_duration")
+    )]
     every: Option<Duration>,
 
     /// A comma-separated list of values, placed into 4ITEM. ex., red,green,blue
@@ -141,7 +141,11 @@ pub struct Opt {
     until_same: bool,
 
     /// Keep going until the output matches this regular expression
-    #[structopt(short = "m", long = "until-match", parse(try_from_str = "Regex::new"))]
+    #[structopt(
+        short = "m",
+        long = "until-match",
+        parse(try_from_str = "Regex::new")
+    )]
     until_match: Option<Regex>,
 
     /// Keep going until a future time, ex. "2018-04-20 04:20:00" (Times in UTC.)
@@ -153,7 +157,11 @@ pub struct Opt {
     until_time: Option<SystemTime>,
 
     /// Keep going until the command exit status is non-zero, or the value given
-    #[structopt(short = "r", long = "until-error", parse(from_str = "get_exit_code"))]
+    #[structopt(
+        short = "r",
+        long = "until-error",
+        parse(from_str = "get_exit_code")
+    )]
     until_error: Option<ExitCode>,
 
     /// Keep going until the command exit status is zero
@@ -267,7 +275,8 @@ fn setup__okay() {
 fn setup__no_command() {
     // no command supplied to loop-rs
     let opt = Opt::default();
-    let app_error = AppError::new(ExitCode::MinorError, "No command supplied, exiting.");
+    let app_error =
+        AppError::new(ExitCode::MinorError, "No command supplied, exiting.");
     match setup(opt) {
         Err(err) => assert_eq!(err, app_error),
         _ => panic!(),

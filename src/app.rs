@@ -28,9 +28,11 @@ impl App {
 
             let is_last = it.is_last;
 
-            let setup_envs = || setup_environment(it.item, it.actual_count, it.count);
+            let setup_envs =
+                || setup_environment(it.item, it.actual_count, it.count);
 
-            let (break_loop, new_state) = m.step(state, setup_envs, command, &mut printer);
+            let (break_loop, new_state) =
+                m.step(state, setup_envs, command, &mut printer);
             state = new_state;
 
             if break_loop {
@@ -67,7 +69,8 @@ fn run__num() {
         every: None,
         iterator: {
             let num = Some(expected_loop_count as f64);
-            let items = vec!["a", "b", "c"].into_iter().map(str::to_owned).collect();
+            let items =
+                vec!["a", "b", "c"].into_iter().map(str::to_owned).collect();
             let offset = 0_f64;
             let count_by = 1_f64;
             LoopIterator::new(offset, count_by, num, items)

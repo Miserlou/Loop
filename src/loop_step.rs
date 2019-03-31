@@ -111,7 +111,10 @@ fn run_command(
 }
 
 /// Check `exit_code` if --until-error flag is set.
-fn check_until_error(should_check: Option<ExitCode>, exit_code: ExitCode) -> bool {
+fn check_until_error(
+    should_check: Option<ExitCode>,
+    exit_code: ExitCode,
+) -> bool {
     match should_check {
         Some(ExitCode::Other(expected)) => expected == exit_code.into(),
         Some(_) => !exit_code.success(),
@@ -141,15 +144,18 @@ impl Default for LoopModel {
 #[test]
 fn test_check_until_error() {
     // check generic error
-    let has_matched = check_until_error(Some(ExitCode::Error), ExitCode::MinorError);
+    let has_matched =
+        check_until_error(Some(ExitCode::Error), ExitCode::MinorError);
     assert!(has_matched);
 
     // check specific error-code
-    let has_matched = check_until_error(Some(ExitCode::Other(99)), ExitCode::Other(99));
+    let has_matched =
+        check_until_error(Some(ExitCode::Other(99)), ExitCode::Other(99));
     assert!(has_matched);
 
     // check specific error-code, no match
-    let has_matched = check_until_error(Some(ExitCode::Other(20)), ExitCode::Other(99));
+    let has_matched =
+        check_until_error(Some(ExitCode::Other(20)), ExitCode::Other(99));
     assert!(!has_matched);
 
     // --until-error flag not set

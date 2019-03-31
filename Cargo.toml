@@ -16,7 +16,7 @@ license = "MIT"
 structopt = "0.2.15"
 humantime = "1.2.0"
 atty = "0.2.11"
-regex = "1.1.2"
+regex = "1.1.5"
 subprocess = "0.1.18"
 
 [[bin]]
