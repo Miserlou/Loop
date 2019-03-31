@@ -55,8 +55,10 @@ impl Iterator for LoopIterator {
         self.index += 1.0;
 
         if self.index <= self.end {
-            let item =
-                self.items.get(current_index as usize).map(ToString::to_string);
+            let item = self
+                .items
+                .get(current_index as usize)
+                .map(ToString::to_string);
 
             let res = Item {
                 item,

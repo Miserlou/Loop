@@ -1,6 +1,7 @@
 use crate::io::{ExitCode, Printer};
 use crate::state::State;
 
+use std::io::Write;
 use std::time::{Duration, Instant, SystemTime};
 
 pub struct LoopModel {
@@ -18,12 +19,12 @@ pub struct LoopModel {
 
 impl LoopModel {
     #[must_use]
-    pub fn step(
+    pub fn step<W: Write>(
         &self,
         mut state: State,
         setup_environment: impl FnOnce(),
         shell_command: impl Fn() -> (String, ExitCode),
-        printer: &mut Printer,
+        printer: &mut Printer<W>,
     ) -> (bool, State) {
         // Set counters before execution
         setup_environment();
@@ -85,13 +86,13 @@ impl LoopModel {
     }
 }
 
-fn run_command(
+fn run_command<W: Write>(
     mut state: State,
     until_error: Option<ExitCode>,
     until_success: bool,
     until_fail: bool,
     shell_command: impl Fn() -> (String, ExitCode),
-    printer: &mut Printer,
+    printer: &mut Printer<W>,
 ) -> (State, ExitCode, String) {
     let (cmd_output, exit_code) = shell_command();
 

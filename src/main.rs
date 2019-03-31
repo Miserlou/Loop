@@ -11,12 +11,12 @@ fn main() {
     use structopt::StructOpt;
 
     let exit_code = setup(Opt::from_args())
-        .map(|(app, setup_env, command, printer)| {
+        .map(|(app, setup_env, command, mut printer)| {
             let setup_env =
                 &|item: Option<String>, actual_count: f64, count: f64| {
                     setup_env.run(item, actual_count, count)
                 };
-            app.run(setup_env, &|| command.run(), printer).exit_code
+            app.run(setup_env, &|| command.run(), &mut printer)
         })
         .unwrap_or_else(|err| {
             if !err.message.is_empty() {

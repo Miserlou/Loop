@@ -5,28 +5,26 @@ use std::io::Write;
 use regex::Regex;
 use subprocess::{Exec, ExitStatus, Redirection};
 
-#[derive(Default)]
-pub struct Printer {
+pub struct Printer<T: Write> {
     pub only_last: bool,
     pub until_contains: Option<String>,
     pub until_match: Option<Regex>,
     pub summary: bool,
     pub last_output: String,
+    pub w: T,
 }
 
-impl Printer {
-    pub fn terminatory_print(&self, create_summary: impl Fn() -> String) {
-        use std::io::stdout;
-
-        let handle = stdout();
-        let mut stdout = handle.lock();
-
+impl<W> Printer<W>
+where
+    W: Write,
+{
+    pub fn terminatory_print(&mut self, create_summary: impl Fn() -> String) {
         if self.only_last {
-            writeln!(stdout, "{}", self.last_output).unwrap();
+            writeln!(self.w, "{}", self.last_output).unwrap();
         }
 
         if self.summary {
-            stdout.write_all(create_summary().as_bytes()).unwrap();
+            self.w.write_all(create_summary().as_bytes()).unwrap();
         }
     }
 
@@ -38,7 +36,7 @@ impl Printer {
             // If we only want output from the last execution,
             // defer printing until later
             if !self.only_last {
-                println!("{}", line); // THIS IS THE MAIN PRINT FUNCTION
+                writeln!(self.w, "{}", line).unwrap(); // THIS IS THE MAIN PRINT FUNCTION
             }
 
             // --until-contains

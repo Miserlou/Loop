@@ -1,9 +1,9 @@
-use crate::io::ExitCode;
-use crate::io::Printer;
+use crate::io::{ExitCode, Printer};
 use crate::loop_iterator::LoopIterator;
 use crate::loop_step::LoopModel;
 use crate::state::State;
 
+use std::io::Write;
 use std::time::{Duration, Instant};
 
 pub struct App {
@@ -14,13 +14,12 @@ pub struct App {
 
 impl App {
     #[must_use]
-    pub fn run(
+    pub fn run<W: Write>(
         self,
         setup_environment: &impl Fn(Option<String>, f64, f64),
         command: &impl Fn() -> (String, ExitCode),
-        mut printer: Printer,
-    ) -> State {
-        let m = self.loop_model;
+        printer: &mut Printer<W>,
+    ) -> ExitCode {
         let mut state = State::default();
 
         for it in self.iterator {
@@ -32,7 +31,7 @@ impl App {
                 || setup_environment(it.item, it.actual_count, it.count);
 
             let (break_loop, new_state) =
-                m.step(state, setup_envs, command, &mut printer);
+                self.loop_model.step(state, setup_envs, command, printer);
             state = new_state;
 
             if break_loop {
@@ -53,48 +52,93 @@ impl App {
             }
         }
 
-        state
+        state.exit_code
     }
 }
 
-#[test]
-#[allow(non_snake_case)]
-fn run__num() {
-    use std::cell::RefCell;
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::fmt::{self, Debug, Formatter};
 
-    // test that loop step method is called twice, flag: --num 2
-    let expected_loop_count = 2;
+    #[test]
+    #[allow(non_snake_case)]
+    fn run__num() {
+        use std::cell::RefCell;
 
-    let app = App {
-        every: None,
-        iterator: {
-            let num = Some(expected_loop_count as f64);
-            let items =
-                vec!["a", "b", "c"].into_iter().map(str::to_owned).collect();
-            let offset = 0_f64;
-            let count_by = 1_f64;
-            LoopIterator::new(offset, count_by, num, items)
-        },
-        loop_model: LoopModel::default(),
-    };
+        // test that loop step method is called twice, flag: --num 2
+        let expected_loop_count = 2;
 
-    let cmd_output = RefCell::new(vec![]);
+        let app = App {
+            every: None,
+            iterator: {
+                let num = Some(expected_loop_count as f64);
+                let items = vec!["a", "b", "c"]
+                    .into_iter()
+                    .map(str::to_owned)
+                    .collect();
+                let offset = 0_f64;
+                let count_by = 1_f64;
+                LoopIterator::new(offset, count_by, num, items)
+            },
+            loop_model: LoopModel::default(),
+        };
 
-    let state = app.run(
-        &|_item, _index, _count| {},
-        &|| {
-            let mut buf = cmd_output.borrow_mut();
-            let output = match buf.len() {
-                0 => "123".to_owned(),
-                _ => "abc".to_owned(),
-            };
-            buf.push(output.clone());
+        let mut printer = Printer::default();
+        let counter = RefCell::new(0);
 
-            (output, ExitCode::Okay)
-        },
-        Printer::default(),
-    );
-    assert_eq!(ExitCode::Okay, state.exit_code);
-    assert_eq!(expected_loop_count, cmd_output.borrow().len());
-    assert_eq!(vec!["123", "abc"], cmd_output.into_inner());
+        let exit_code = app.run(
+            &|_item, _index, _count| {},
+            &|| {
+                let mut count = counter.borrow_mut();
+                let output = match *count {
+                    0 => "123".to_owned(),
+                    _ => "abc".to_owned(),
+                };
+                *count += 1;
+
+                (output, ExitCode::Okay)
+            },
+            &mut printer,
+        );
+
+        let inner_data = printer.into_inner();
+
+        assert_eq!(ExitCode::Okay, exit_code);
+        assert_eq!(expected_loop_count, *counter.borrow());
+        assert_eq!(vec!["123", "abc"], inner_data);
+    }
+
+    impl Printer<Vec<u8>> {
+        #[allow(dead_code)]
+        pub fn into_inner(self) -> Vec<String> {
+            String::from_utf8(self.w)
+                .unwrap_or_default()
+                .lines()
+                .map(str::to_owned)
+                .collect()
+        }
+    }
+
+    impl<T> Debug for Printer<T>
+    where
+        T: Write + Debug,
+    {
+        fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+            write!(f, "{:?}", self)
+        }
+    }
+
+    impl Default for Printer<Vec<u8>> {
+        fn default() -> Printer<Vec<u8>> {
+            Printer {
+                only_last: false,
+                until_contains: None,
+                until_match: None,
+                summary: false,
+                last_output: String::default(),
+                w: vec![],
+            }
+        }
+    }
 }

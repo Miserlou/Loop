@@ -3,6 +3,7 @@ use crate::io::{ExitCode, Printer, SetupEnv, ShellCommand};
 use crate::loop_iterator::LoopIterator;
 use crate::loop_step::LoopModel;
 
+use std::io;
 use std::time::{Duration, Instant, SystemTime};
 
 use humantime::{parse_duration, parse_rfc3339_weak};
@@ -11,7 +12,7 @@ use structopt::StructOpt;
 
 pub fn setup(
     mut opt: Opt,
-) -> Result<(App, SetupEnv, ShellCommand, Printer), AppError> {
+) -> Result<(App, SetupEnv, ShellCommand, Printer<io::Stdout>), AppError> {
     // Time
     let program_start = Instant::now();
     let cmd_with_args = opt.input.join(" ");
@@ -29,6 +30,7 @@ pub fn setup(
         until_match: opt.until_match.clone(),
         summary: opt.summary,
         last_output: String::new(),
+        w: io::stdout(),
     };
 
     let setup_env = SetupEnv {
@@ -61,7 +63,10 @@ impl AppError {
     where
         M: Into<String>,
     {
-        AppError { exit_code, message: msg.into() }
+        AppError {
+            exit_code,
+            message: msg.into(),
+        }
     }
 }
 
@@ -76,7 +81,10 @@ fn precision_of(s: &str) -> usize {
 }
 
 fn get_exit_code(input: &str) -> ExitCode {
-    input.parse::<u32>().map(ExitCode::from).unwrap_or_else(|_| ExitCode::Error)
+    input
+        .parse::<u32>()
+        .map(ExitCode::from)
+        .unwrap_or_else(|_| ExitCode::Error)
 }
 
 fn get_values(input: &str) -> Vec<String> {
