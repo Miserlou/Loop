@@ -8,6 +8,7 @@ use std::time::{Duration, Instant, SystemTime};
 
 use humantime::{parse_duration, parse_rfc3339_weak};
 use regex::Regex;
+use smart_default::SmartDefault;
 use structopt::StructOpt;
 
 pub fn setup(
@@ -97,7 +98,7 @@ fn get_values(input: &str) -> Vec<String> {
     }
 }
 
-#[derive(StructOpt, Debug)]
+#[derive(StructOpt, Debug, SmartDefault)]
 #[structopt(
     name = "loop",
     author = "Rich Jones <miserlou@gmail.com>",
@@ -110,6 +111,7 @@ pub struct Opt {
 
     /// Amount to increment the counter by
     #[structopt(short = "b", long = "count-by", default_value = "1")]
+    #[default = 1.0]
     count_by: f64,
 
     /// Amount to offset the initial counter by
@@ -199,32 +201,6 @@ pub struct Opt {
     /// The command to be looped
     #[structopt(raw(multiple = "true"))]
     input: Vec<String>,
-}
-
-impl Default for Opt {
-    fn default() -> Opt {
-        Opt {
-            num: None,
-            count_by: 1_f64,
-            offset: 0_f64,
-            every: None,
-            ffor: None,
-            for_duration: None,
-            until_contains: None,
-            until_changes: false,
-            until_same: false,
-            until_match: None,
-            until_time: None,
-            until_error: None,
-            until_success: false,
-            until_fail: false,
-            only_last: false,
-            stdin: false,
-            error_duration: false,
-            summary: false,
-            input: vec![],
-        }
-    }
 }
 
 impl From<&mut Opt> for LoopIterator {

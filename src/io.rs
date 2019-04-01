@@ -3,6 +3,7 @@ use crate::state::State;
 use std::io::Write;
 
 use regex::Regex;
+use smart_default::SmartDefault;
 use subprocess::{Exec, ExitStatus, Redirection};
 
 pub struct Printer<T: Write> {
@@ -97,9 +98,11 @@ impl SetupEnv {
     }
 }
 
-#[derive(Debug, PartialEq, Clone, Copy)]
+#[derive(Debug, PartialEq, Clone, Copy, SmartDefault)]
 pub enum ExitCode {
+    #[default]
     Okay,
+
     Error,
     /// e.g. when no argument is passed to loop-rs (2)
     MinorError,
@@ -113,12 +116,6 @@ pub enum ExitCode {
 impl ExitCode {
     pub fn success(self) -> bool {
         ExitCode::Okay == self
-    }
-}
-
-impl Default for ExitCode {
-    fn default() -> ExitCode {
-        ExitCode::Okay
     }
 }
 

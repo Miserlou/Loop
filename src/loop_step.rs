@@ -4,6 +4,9 @@ use crate::state::State;
 use std::io::Write;
 use std::time::{Duration, Instant, SystemTime};
 
+use smart_default::SmartDefault;
+
+#[derive(SmartDefault)]
 pub struct LoopModel {
     pub for_duration: Option<Duration>,
     pub error_duration: bool,
@@ -14,6 +17,8 @@ pub struct LoopModel {
     pub summary: bool,
     pub until_changes: bool,
     pub until_same: bool,
+
+    #[default(Instant::now())]
     pub program_start: Instant,
 }
 
@@ -120,25 +125,6 @@ fn check_until_error(
         Some(ExitCode::Other(expected)) => expected == exit_code.into(),
         Some(_) => !exit_code.success(),
         _ => false,
-    }
-}
-
-impl Default for LoopModel {
-    fn default() -> LoopModel {
-        use std::time::Instant;
-
-        LoopModel {
-            for_duration: None,
-            error_duration: false,
-            until_time: None,
-            until_error: None,
-            until_success: false,
-            until_fail: false,
-            summary: false,
-            until_changes: false,
-            until_same: false,
-            program_start: Instant::now(),
-        }
     }
 }
 
