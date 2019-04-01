@@ -1,24 +1,25 @@
 [package]
-name = "loop-rs"
-version = "0.6.1"
-authors = ["Rich Jones <miserlou@gmail.com>"]
-description = "UNIX's missing loop command"
+name          = "loop-rs"
+version       = "0.6.1"
+authors       = ["Rich Jones <miserlou@gmail.com>"]
+description   = "UNIX's missing loop command"
+edition       = "2018"
 
 documentation = "https://github.com/Miserlou/Loop"
-homepage = "https://github.com/Miserlou/Loop"
-repository = "https://github.com/Miserlou/Loop"
+homepage      = "https://github.com/Miserlou/Loop"
+repository    = "https://github.com/Miserlou/Loop"
 
-readme = "README.md"
-license = "MIT"
+readme        = "README.md"
+license       = "MIT"
 
 [dependencies]
-structopt = "0.2" 
-humantime = "1.1.1"
-atty = "0.2"
-regex = "1.0.0"
-subprocess = "0.1.12"
-tempfile = "3.0.3"
+structopt     = "0.2.15"
+humantime     = "1.2.0"
+atty          = "0.2.11"
+regex         = "1.1.5"
+subprocess    = "0.1.18"
+smart-default = "0.5.1"
 
 [[bin]]
-name = "loop"
-path = "src/main.rs"
+name          = "loop"
+path          = "src/main.rs"

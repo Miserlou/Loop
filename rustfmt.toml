@@ -1,0 +1,18 @@
+max_width = 80
+newline_style = "Unix"
+use_field_init_shorthand = true
+use_try_shorthand = true
+
+# wrap_comments = true
+# comment_width = 100
+# fn_single_line = true
+# format_strings = true
+# merge_imports = true
+# match_block_trailing_comma = true
+# force_multiline_blocks = true
+# normalize_comments = true
+# struct_field_align_threshold = 20
+# spaces_around_ranges = true
+# format_doc_comments = true
+# condense_wildcard_suffixes = true
+# overflow_delimited_expr = true
