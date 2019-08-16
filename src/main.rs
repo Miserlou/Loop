@@ -8,20 +8,26 @@ extern crate tempfile;
 use std::env;
 use std::f64;
 use std::io::prelude::*;
-use std::io::{self, BufRead, SeekFrom};
+use std::io::{self, BufRead};
+use std::io::{stdout, stderr};
 use std::process;
-use std::thread;
+use std::thread::{self, JoinHandle};
+use std::sync::mpsc::{Sender, Receiver, channel};
 use std::time::{Duration, Instant, SystemTime};
+use subprocess::{ExitStatus, CaptureData};
 
 use humantime::{parse_duration, parse_rfc3339_weak};
 use regex::Regex;
-use subprocess::{Exec, ExitStatus, Redirection};
 use structopt::StructOpt;
 
-static UNKONWN_EXIT_CODE: u32 = 99;
+mod supervisor;
+mod evaluator;
+
+use evaluator::{execute, Response};
 
 // same exit code as use of `timeout` shell command
 static TIMEOUT_EXIT_CODE: i32 = 124;
+static UNKONWN_EXIT_CODE: u32 = 99;
 
 fn main() {
 
@@ -39,7 +45,7 @@ fn main() {
     let program_start = Instant::now();
 
     // Number of iterations
-    let mut items = if let Some(items) = opt.ffor { items.clone() } else { vec![] };
+    let mut items = if let Some(ref items) = opt.ffor { items.clone() } else { vec![] };
 
     // Get any lines from stdin
     if opt.stdin || atty::isnt(atty::Stream::Stdin) {
@@ -63,10 +69,6 @@ fn main() {
     } else {
         f64::INFINITY
     };
-    let mut has_matched = false;
-    let mut tmpfile = tempfile::tempfile().unwrap();
-    let mut summary = Summary { successes: 0, failures: Vec::new() };
-    let mut previous_stdout = None;
 
     let counter = Counter {
             start: opt.offset - opt.count_by,
@@ -74,6 +76,28 @@ fn main() {
             end: num,
             step_by: opt.count_by
     };
+
+    let mut detach_data = if opt.detach {
+        let (requests_in, requests_out) = channel();
+        let (responses_in, responses_out) = channel();
+        let supervisor_thread = thread::spawn(move || {
+            supervisor::supervisor(requests_out, responses_in); 
+        });
+        Some(DetachData{
+            supervisor: supervisor_thread,
+            requests_in: requests_in,
+            responses_out: responses_out
+        })
+    } else {
+        None
+    };
+
+    let mut app_state = AppState{
+        options: &opt,
+        summary: Summary { successes: 0, failures: Vec::new() },
+        previous_result: None,
+    };
+
     for (count, actual_count) in counter.enumerate() {
 
         // Time Start
@@ -87,6 +111,16 @@ fn main() {
         // Set iterated item as environment variable
         if let Some(item) = items.get(count) {
             env::set_var("ITEM", item);
+        }
+
+        // Finish if we have result from detached thread
+        if let Some(ref detach_data) = detach_data{
+            if let Ok(response) = detach_data.responses_out.try_recv(){
+                app_state = handle_output(&response, app_state);
+                if response.should_stop(){
+                    break;
+                }
+            }
         }
 
         // Finish if we're over our duration
@@ -110,94 +144,26 @@ fn main() {
         }
 
         // Main executor
-        tmpfile.seek(SeekFrom::Start(0)).ok();
-        tmpfile.set_len(0).ok();
-        let result = Exec::shell(joined_input)
-            .stdout(Redirection::File(tmpfile.try_clone().unwrap()))
-            .stderr(Redirection::Merge)
-            .capture().unwrap();
-
-        // Print the results
-        let mut stdout = String::new();
-        tmpfile.seek(SeekFrom::Start(0)).ok();
-        tmpfile.read_to_string(&mut stdout).ok();
-        for line in stdout.lines() {
-            // --only-last
-            // If we only want output from the last execution,
-            // defer printing until later
-            if !opt.only_last {
-                println!("{}", line);
-            }
-
-            // --until-contains
-            // We defer loop breaking until the entire result is printed.
-            if let Some(string) = &opt.until_contains {
-                if line.contains(string){
-                    has_matched = true;
-                }
-            }
-
-            // --until-match
-            if let Some(regex) = &opt.until_match {
-                if regex.captures(&line).is_some() {
-                    has_matched = true;
-                }
-            }
-        }
-
-        // --until-error
-        if let Some(error_code) = &opt.until_error {
-            match error_code {
-                ErrorCode::Any => if !result.exit_status.success() {
-                    has_matched = true;
-                },
-                ErrorCode::Code(code) =>  {
-                    if result.exit_status == ExitStatus::Exited(*code) {
-                        has_matched = true;
-                    }
-                }
-            }
-        }
-
-        // --until-success
-        if opt.until_success && result.exit_status.success() {
-                has_matched = true;
-        }
-
-        // --until-fail
-        if opt.until_fail && !(result.exit_status.success()) {
-                has_matched = true;
-        }
-
-        if opt.summary {
-            match result.exit_status {
-                ExitStatus::Exited(0)  =>  summary.successes += 1,
-                ExitStatus::Exited(n) => summary.failures.push(n),
-                _ => summary.failures.push(UNKONWN_EXIT_CODE),
-            }
-        }
-
-        // Finish if we matched
-        if has_matched {
-            break;
-        }
-
-        if let Some(ref previous_stdout) = previous_stdout {
-            // --until-changes
-            if opt.until_changes {
-                if *previous_stdout != stdout {
-                    break;
-                }
-            }
-
-            // --until-same
-            if opt.until_same {
-                if *previous_stdout == stdout {
-                    break;
-                }
-            }
+        if opt.detach{
+            let th_opt = opt.clone();
+            let dd = detach_data.as_mut().unwrap();
+            dd.requests_in.send((count, th_opt)).unwrap();
         } else {
-            previous_stdout = Some(stdout);
+            let (opt, result) = execute(opt.clone());
+
+            // Finish if we matched
+            let response = Response{
+                options: opt,
+                result: supervisor::clone_data(&result),
+                last_result: match app_state.previous_result{
+                    Some(ref lr) => Some(supervisor::clone_data(&lr)),
+                    None => None,
+                }
+            };
+            app_state = handle_output(&response, app_state);
+            if response.should_stop(){
+                break;
+            }
         }
 
         // Delay until next iteration time
@@ -208,24 +174,50 @@ fn main() {
     }
 
     if opt.only_last {
-        let mut stdout = String::new();
-        tmpfile.seek(SeekFrom::Start(0)).ok();
-        tmpfile.read_to_string(&mut stdout).ok();
-        for line in stdout.lines() {
-            println!("{}", line);
+        if let Some(ref previous_result) = &app_state.previous_result {
+            stdout().write_all(&previous_result.stdout).unwrap();
+            stderr().write_all(&previous_result.stderr).unwrap();
         }
     }
 
     if opt.summary {
-        summary.print()
+        app_state.summary.print()
+    }
+    if let Some(detach_data) = detach_data{
+        detach_data.supervisor.join().unwrap();
     }
     process::exit(exit_status);
 }
 
-#[derive(StructOpt, Debug)]
+fn handle_output<'a>(response: &Response, mut state: AppState<'a>) -> AppState<'a> {
+    if !state.options.only_last {
+        stdout().write_all(&response.result.stdout).unwrap();
+        stderr().write_all(&response.result.stderr).unwrap();
+    }
+    if state.options.summary {
+        match response.result.exit_status {
+            ExitStatus::Exited(0)  => state.summary.successes += 1,
+            ExitStatus::Exited(n) => state.summary.failures.push(n),
+            _ => state.summary.failures.push(UNKONWN_EXIT_CODE),
+        }
+    }
+    AppState{
+        previous_result: Some(supervisor::clone_data(&response.result)),
+        ..state
+    }
+}
+
+struct AppState <'a>{
+    options: &'a Opt,
+    summary: Summary,
+    previous_result: Option<CaptureData>,
+}
+
+
+#[derive(StructOpt, Debug, Clone)]
 #[structopt(name = "loop", author = "Rich Jones <miserlou@gmail.com>",
             about = "UNIX's missing `loop` command")]
-struct Opt {
+pub struct Opt {
     /// Number of iterations to execute
     #[structopt(short = "n", long = "num")]
     num: Option<f64>,
@@ -299,6 +291,10 @@ struct Opt {
     #[structopt(long = "summary")]
     summary: bool,
 
+    /// Do not be blocked by the running command
+    #[structopt(long = "detach")]
+    detach: bool,
+
     /// The command to be looped
     #[structopt(raw(multiple="true"))]
     input: Vec<String>
@@ -318,13 +314,13 @@ fn precision_of(s: &str) -> usize {
     exp - after_point
 }
 
-#[derive(Debug)]
-enum ErrorCode {
+#[derive(Debug, Clone)]
+pub enum ErrorCode {
     Any,
     Code(u32),
 }
 
-fn get_error_code(input: &str) -> ErrorCode {
+pub fn get_error_code(input: &str) -> ErrorCode {
     if let Ok(code) = input.parse::<u32>() {
         ErrorCode::Code(code)
     } else {
@@ -350,22 +346,30 @@ struct Counter {
 }
 
 #[derive(Debug)]
-struct Summary {
+struct DetachData {
+    supervisor: JoinHandle<()>,
+    requests_in: Sender<(usize, Opt)>,
+    responses_out: Receiver<supervisor::Response>
+}
+
+#[derive(Debug)]
+pub struct Summary {
     successes: u32,
     failures: Vec<u32>
 }
 
 impl Summary {
-    fn print(self) {
+    fn print(&self) {
         let total = self.successes + self.failures.len() as u32;
 
         let errors = if self.failures.is_empty() {
             String::from("0")
         } else {
-            format!("{} ({})", self.failures.len(), self.failures.into_iter()
-                    .map(|f| (-(f as i32)).to_string())
-                    .collect::<Vec<String>>()
-                    .join(", "))
+            format!("{} (TODO)", self.failures.len())
+           // format!("{} ({})", self.failures.len(), self.failures.into_iter()
+           //         .map(|f| (-(f as i32)).to_string())
+           //         .collect::<Vec<String>>()
+           //         .join(", "))
         };
 
         println!("Total runs:\t{}", total);
