@@ -1,4 +1,3 @@
-#[macro_use]
 extern crate structopt;
 extern crate humantime;
 extern crate atty;
@@ -325,7 +324,7 @@ enum ErrorCode {
     Code(u32),
 }
 
-fn get_error_code(input: &&str) -> ErrorCode {
+fn get_error_code(input: &str) -> ErrorCode {
     if let Ok(code) = input.parse::<u32>() {
         ErrorCode::Code(code)
     } else {
@@ -333,7 +332,7 @@ fn get_error_code(input: &&str) -> ErrorCode {
     }
 }
 
-fn get_values(input: &&str) -> Vec<String> {
+fn get_values(input: &str) -> Vec<String> {
     if input.contains('\n'){
         input.split('\n').map(String::from).collect()
     } else if input.contains(','){
