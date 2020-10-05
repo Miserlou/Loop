@@ -272,7 +272,7 @@ struct Opt {
     #[structopt(short = "t", long = "until-time", parse(try_from_str = "parse_rfc3339_weak"))]
     until_time: Option<SystemTime>,
 
-    /// Keep going until the command exit status is non-zero, or the value given
+    /// Keep going until the command exit status is the value given
     #[structopt(short = "r", long = "until-error", parse(from_str = "get_error_code"))]
     until_error: Option<ErrorCode>,
 
