@@ -362,8 +362,8 @@ impl Summary {
         let errors = if self.failures.is_empty() {
             String::from("0")
         } else {
-            format!("{} ({})", self.failures.len(), self.failures.into_iter()
-                    .map(|f| (-(f as i32)).to_string())
+            format!("{} ({})", self.failures.len(), self.failures.as_slice().into_iter()
+                    .map(|f| ((*f as u32)).to_string())
                     .collect::<Vec<String>>()
                     .join(", "))
         };
