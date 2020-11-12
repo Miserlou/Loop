@@ -14,7 +14,7 @@ Loops in bash are surprisingly complicated and fickle! I wanted a simple and int
    - `$ loop --every 10s -- ls`
 
  * Have **custom counters**!
-   - `$ loop --count-by 5 -- touch $COUNT.txt`
+   - `$ loop --count-by 5 -- 'touch $COUNT.txt'`
 
  * Loop **until output matches** a condition!
    - `$ loop --until-contains 200 -- ./get_response_code.sh --site mysite.biz`
@@ -26,7 +26,7 @@ Loops in bash are surprisingly complicated and fickle! I wanted a simple and int
     - `$ loop --until-success -- ./poke_server`
 
  * Iterate over the **standard input**!
-    - `$ cat files_to_create.txt | loop -- touch $ITEM`
+    - `$ cat files_to_create.txt | loop -- 'touch $ITEM'`
 
  * Get a **summary** of the runs!
     - `$ loop --for-duration 10min --summary -- ls`
@@ -125,7 +125,7 @@ You can also use double dashes ( ` -- ` ) to seperate arguments:
 
 `loop` places a counter value into the `$COUNT` environment variable.
 
-    $ loop -- echo $COUNT
+    $ loop -- 'echo $COUNT'
     0
     1
     2
@@ -133,7 +133,7 @@ You can also use double dashes ( ` -- ` ) to seperate arguments:
 
 The amount this counter increments can be changed with `--count-by`:
 
-    $ loop --count-by 2 -- echo $COUNT
+    $ loop --count-by 2 -- 'echo $COUNT'
     0
     2
     4
@@ -142,7 +142,7 @@ The amount this counter increments can be changed with `--count-by`:
 
 The counter can be offset with `--offset`:
 
-    $ loop --count-by 2 --offset 10 -- echo $COUNT
+    $ loop --count-by 2 --offset 10 -- 'echo $COUNT'
     10
     12
     14
@@ -166,7 +166,7 @@ There's also an `$ACTUALCOUNT`:
 
 You can get a summary of successes and failures (based on exit codes) with `--summary`:
 
-    $ loop --num 3 --summary -- 'echo $COUNT' 
+    $ loop --num 3 --summary -- 'echo $COUNT'
     0
     1
     2
@@ -207,7 +207,7 @@ Looping can be limited to a set duration with `--for-duration`:
 
 Or until a certain date/time with `--until-time`:
 
-    $ loop --until-time '2018-05-25 20:50:00' --every 5s -- 'date -u' 
+    $ loop --until-time '2018-05-25 20:50:00' --every 5s -- 'date -u'
     Fri May 25 20:49:49 UTC 2018
     Fri May 25 20:49:54 UTC 2018
     Fri May 25 20:49:59 UTC 2018
@@ -318,7 +318,7 @@ Here are some handy things you can do with `loop`!
 
 If you have a lot of files and a program, but don't know which file is the one the program takes, you can loop over them until you find it:
 
-    $ ls  -1 | loop --until-success -- './my_program $ITEM'; 
+    $ ls  -1 | loop --until-success -- './my_program $ITEM';
 
 Or, if you have a list of files but need to find the one which causes your program to fail:
 
