@@ -110,8 +110,8 @@ fn main() {
         }
 
         // Main executor
-        tmpfile.seek(SeekFrom::Start(0)).ok();
-        tmpfile.set_len(0).ok();
+        tmpfile.seek(SeekFrom::Start(0)).expect("seek failed");
+        tmpfile.set_len(0).expect("truncate failed");
         let result = Exec::shell(joined_input)
             .stdout(Redirection::File(tmpfile.try_clone().unwrap()))
             .stderr(Redirection::Merge)
@@ -119,8 +119,8 @@ fn main() {
 
         // Print the results
         let mut stdout = String::new();
-        tmpfile.seek(SeekFrom::Start(0)).ok();
-        tmpfile.read_to_string(&mut stdout).ok();
+        tmpfile.seek(SeekFrom::Start(0)).expect("seek failed");
+        tmpfile.read_to_string(&mut stdout).expect("read failed");
         for line in stdout.lines() {
             // --only-last
             // If we only want output from the last execution,
@@ -209,8 +209,8 @@ fn main() {
 
     if opt.only_last {
         let mut stdout = String::new();
-        tmpfile.seek(SeekFrom::Start(0)).ok();
-        tmpfile.read_to_string(&mut stdout).ok();
+        tmpfile.seek(SeekFrom::Start(0)).expect("seek failed");
+        tmpfile.read_to_string(&mut stdout).expect("read failed");
         for line in stdout.lines() {
             println!("{}", line);
         }
