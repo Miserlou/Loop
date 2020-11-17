@@ -19,6 +19,9 @@ regex = "1.0.0"
 subprocess = "0.1.12"
 tempfile = "3.0.3"
 
+[dev-dependencies]
+assert_cmd = "1.0.1"
+
 [[bin]]
 name = "loop"
 path = "src/main.rs"
