@@ -180,7 +180,7 @@ or
     [ .. ]
     Total runs:  3
     Successes:   0
-    Failures:    3 (-1, -1, -1)
+    Failures:    3 (1, 1, 1)
 
 If you only want the output of the last result, you can use `--only-last`:
 
