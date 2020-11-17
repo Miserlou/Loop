@@ -213,6 +213,26 @@ Or until a certain date/time with `--until-time`:
     Fri May 25 20:49:59 UTC 2018
     $
 
+It is possible to start commands regardles of whether a previous run had already ended by providing `--detach` option:
+
+    $ loop --every 2s --detach -- date;sleep 5;
+    Wed Oct  7 10:55:45 CEST 2020
+    Wed Oct  7 10:55:47 CEST 2020
+    Wed Oct  7 10:55:49 CEST 2020
+    Wed Oct  7 10:55:51 CEST 2020
+    Wed Oct  7 10:55:53 CEST 2020
+    Wed Oct  7 10:55:55 CEST 2020
+
+Without the `--detach` option it would print:
+
+    $ loop --every 2s -- date;sleep 5;
+    Wed Oct  7 10:56:09 CEST 2020
+    Wed Oct  7 10:56:14 CEST 2020
+    Wed Oct  7 10:56:19 CEST 2020
+    Wed Oct  7 10:56:24 CEST 2020
+    Wed Oct  7 10:56:29 CEST 2020
+    Wed Oct  7 10:56:34 CEST 2020
+
 ### Until Conditions
 
 `loop` can iterate until output contains a string with `--until-contains`:
