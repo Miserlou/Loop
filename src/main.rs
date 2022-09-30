@@ -18,7 +18,7 @@ use regex::Regex;
 use subprocess::{Exec, ExitStatus, Redirection};
 use structopt::StructOpt;
 
-static UNKONWN_EXIT_CODE: u32 = 99;
+static UNKNOWN_EXIT_CODE: u32 = 99;
 
 // same exit code as use of `timeout` shell command
 static TIMEOUT_EXIT_CODE: i32 = 124;
@@ -173,7 +173,7 @@ fn main() {
             match result.exit_status {
                 ExitStatus::Exited(0)  =>  summary.successes += 1,
                 ExitStatus::Exited(n) => summary.failures.push(n),
-                _ => summary.failures.push(UNKONWN_EXIT_CODE),
+                _ => summary.failures.push(UNKNOWN_EXIT_CODE),
             }
         }
 

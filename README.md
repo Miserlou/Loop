@@ -112,7 +112,7 @@ With no arguments, `loop` will simply repeatedly execute a command string as fas
     hello
     [ .. ]
 
-You can also use double dashes ( ` -- ` ) to seperate arguments:
+You can also use double dashes ( ` -- ` ) to separate arguments:
 
     $ loop -- echo hello
     hello
@@ -355,7 +355,7 @@ If you've got a whole list of files that you want to create backup copies of, yo
 
 _This is an [example from StackExchange](https://unix.stackexchange.com/questions/82598/how-do-i-write-a-retry-logic-in-script-to-keep-retrying-to-run-it-upto-5-times/)._
 
-> I want to write logic in shell script which will retry it to run again after 15 sec upto 5 times based on "status code=FAIL" if it fails due to some issue.
+> I want to write logic in shell script which will retry it to run again after 15 sec up to 5 times based on "status code=FAIL" if it fails due to some issue.
 
 There are so many questions like this on StackExchange, which all end up with long threads of complicated answers.
 
